@@ -28,21 +28,17 @@ impl<'a> Board<'a> {
         }
     }
 
-    fn move_top_piece(&mut self, from_y: i8, from_x: i8, to_y: i8, to_x: i8) -> Result<(), ()> {
+    fn move_top_piece(&mut self, from_y: i8, from_x: i8, to_y: i8, to_x: i8) -> Result<(), String> {
         let from_cell = self
             .cells
             .get_mut(&Coordinate {
                 x: from_x,
                 y: from_y,
             })
-            .ok_or(())?;
-        let piece = from_cell.pop().ok_or(())?;
+            .ok_or("Could not get cell 'from'")?;
+        let piece = from_cell.pop().ok_or("'from' cell is empty")?;
 
-        let to_cell = self
-            .cells
-            .get_mut(&Coordinate { x: to_x, y: to_y })
-            .ok_or(())?;
-        to_cell.push(piece);
+        self.put_piece(piece, to_y, to_x);
         Ok(())
     }
 }
@@ -70,17 +66,23 @@ fn simple_board() {
         bug: Beetle,
         color: White,
     };
+    let black_ant = piece::Piece {
+        bug: Ant,
+        color: Black,
+    };
 
     board.put_piece(&black_bee, 0, 0);
     board.put_piece(&white_bee, 0, 1);
     board.put_piece(&black_beetle, 0, 1);
     board.put_piece(&white_beetle, 0, 1);
-
+    board.put_piece(&black_ant, 0, -1);
+    board.move_top_piece(0, -1, 1, 1).unwrap();
     board.move_top_piece(0, 1, 0, 0).unwrap();
 
     assert_eq!(board.get_cell(0, 0), Some(vec![&black_bee, &white_beetle]));
     assert_eq!(board.get_cell(0, 1), Some(vec![&white_bee, &black_beetle]));
+    assert_eq!(board.get_cell(1, 1), Some(vec![&black_ant]));
     assert_eq!(board.get_cell(10, 1), None);
 
-    assert_eq!(board.move_top_piece(0, 50, 0, 0), Err(()));
+    assert!(board.move_top_piece(0, 50, 0, 0).is_err());
 }
