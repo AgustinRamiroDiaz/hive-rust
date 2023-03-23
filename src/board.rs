@@ -14,11 +14,11 @@ struct Board<'a> {
 type Cell<'a> = Vec<&'a piece::Piece>;
 
 impl<'a> Board<'a> {
-    fn get_cell(&self, y: i8, x: i8) -> Option<Cell> {
+    fn get_cell(&self, x: i8, y: i8) -> Option<Cell> {
         self.cells.get(&Coordinate { x, y }).cloned()
     }
 
-    fn put_piece(&mut self, p: &'a piece::Piece, y: i8, x: i8) {
+    fn put_piece(&mut self, p: &'a piece::Piece, x: i8, y: i8) {
         match self.cells.get_mut(&Coordinate { x, y }) {
             None => {
                 let cell = vec![p];
@@ -28,7 +28,7 @@ impl<'a> Board<'a> {
         }
     }
 
-    fn move_top_piece(&mut self, from_y: i8, from_x: i8, to_y: i8, to_x: i8) -> Result<(), String> {
+    fn move_top_piece(&mut self, from_x: i8, from_y: i8, to_x: i8, to_y: i8) -> Result<(), String> {
         let from_cell = self
             .cells
             .get_mut(&Coordinate {
@@ -38,7 +38,7 @@ impl<'a> Board<'a> {
             .ok_or("Could not get cell 'from'")?;
         let piece = from_cell.pop().ok_or("'from' cell is empty")?;
 
-        self.put_piece(piece, to_y, to_x);
+        self.put_piece(piece, to_x, to_y);
         Ok(())
     }
 }
