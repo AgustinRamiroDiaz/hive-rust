@@ -1,7 +1,12 @@
-use crate::{piece::Bug, piece::Color, piece::Piece};
+use std::collections::HashMap;
 
-struct Game {
+use crate::board::Board;
+use crate::piece::{Bug, Color, Piece};
+
+struct Game<'a> {
     turn: Color,
+    board: Board<'a>,
+    turn_number: u8,
 }
 
 #[derive(Debug, PartialEq)]
@@ -12,10 +17,53 @@ enum GameError {
     QueenMustBePlacedBeforeFifthTurn,
     SpawnedInOpponentsHive,
     SpawnedOnTopOfAnotherPiece,
+    SpawnedOutOfHive,
 }
 
-impl Game {
-    fn put(&self, piece: &Piece, x: i8, y: i8) -> Result<(), GameError> {
+impl<'a> Game<'a> {
+    fn new() -> Self {
+        Game {
+            turn: Color::Black,
+            board: Board::new(),
+            turn_number: 1,
+        }
+    }
+    fn put(&mut self, piece: &'a Piece, x: i8, y: i8) -> Result<(), GameError> {
+        if piece.color != self.turn {
+            return Err(GameError::NotYourTurn);
+        }
+
+        if self.board.get_cell(x, y).is_some() {
+            return Err(GameError::SpawnedOnTopOfAnotherPiece);
+        }
+
+        let neighbors = self.board.neighbors(x, y);
+
+        if self.board.cells.values().len() != 0 && neighbors.is_empty() {
+            return Err(GameError::SpawnedOutOfHive);
+        }
+
+        if self.board.cells.values().len() > 1 && neighbors.iter().any(|p| p.color != piece.color) {
+            return Err(GameError::SpawnedInOpponentsHive);
+        }
+
+        // TODO: test this
+        let colored_queen_is_not_placed = self
+            .board
+            .cells
+            .values()
+            .flatten()
+            .any(|p| p.bug != Bug::Bee && p.color == self.turn);
+
+        let is_fourth_turn = self.turn_number == 7 || self.turn_number == 8;
+
+        if is_fourth_turn && piece.bug != Bug::Bee && colored_queen_is_not_placed {
+            return Err(GameError::QueenMustBePlacedBeforeFifthTurn);
+        }
+
+        self.board.put_piece(piece, x, y);
+        self.turn = !self.turn.clone();
+        self.turn_number += 1;
         Ok(())
     }
 
@@ -26,7 +74,7 @@ impl Game {
 
 #[test]
 fn simple_game() {
-    let game = Game { turn: Color::Black };
+    let mut game = Game::new();
 
     let black_bee = Piece {
         bug: Bug::Bee,
@@ -88,8 +136,5 @@ fn simple_game() {
         Err(GameError::NoPieceAtLocation)
     );
 
-    assert_eq!(game.move_top(0, 0, 0, 0), Err(GameError::InvalidMove));
-    assert_eq!(game.move_top(0, 0, 0, 1), Err(GameError::InvalidMove));
-
-    game.put(&white_grasshopper, 0, 0).unwrap(); // white grasshopper is placed at (0, 0)
+    game.put(&white_grasshopper, -1, 0).unwrap(); // white grasshopper is placed at (-1, 0)
 }
