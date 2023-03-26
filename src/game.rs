@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::board::Board;
+use crate::board::{Board, Coordinate};
 use crate::piece::{Bug, Color, Piece};
 
 struct Game<'a> {
@@ -29,15 +29,16 @@ impl<'a> Game<'a> {
         }
     }
     fn put(&mut self, piece: &'a Piece, x: i8, y: i8) -> Result<(), GameError> {
+        let coordinate = Coordinate::from((x, y));
         if piece.color != self.turn {
             return Err(GameError::NotYourTurn);
         }
 
-        if self.board.get_cell(x, y).is_some() {
+        if self.board.get_cell(coordinate).is_some() {
             return Err(GameError::SpawnedOnTopOfAnotherPiece);
         }
 
-        let neighbors = self.board.neighbors(x, y);
+        let neighbors = self.board.neighbor_pieces(coordinate);
 
         if self.board.cells.values().len() != 0 && neighbors.is_empty() {
             return Err(GameError::SpawnedOutOfHive);
@@ -48,6 +49,7 @@ impl<'a> Game<'a> {
         }
 
         // TODO: test this
+        // TODO: remove the knowledge of the internal board cells
         let colored_queen_is_not_placed = self
             .board
             .cells
@@ -61,14 +63,18 @@ impl<'a> Game<'a> {
             return Err(GameError::QueenMustBePlacedBeforeFifthTurn);
         }
 
-        self.board.put_piece(piece, x, y);
+        self.board.put_piece(piece, coordinate);
         self.turn = !self.turn.clone();
         self.turn_number += 1;
         Ok(())
     }
 
     fn move_top(&self, from_x: i8, from_y: i8, to_x: i8, to_y: i8) -> Result<(), GameError> {
-        Ok(())
+        todo!()
+    }
+
+    fn can_move() {
+        todo!()
     }
 }
 
