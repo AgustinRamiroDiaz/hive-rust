@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::fmt::Error;
 
 use crate::board::{Board, Coordinate};
 use crate::piece::{Bug, Color, Piece};
@@ -73,7 +74,41 @@ impl<'a> Game<'a> {
         todo!()
     }
 
-    fn can_move() {
+    fn can_move(&self, from: Coordinate, to: Coordinate) -> Result<bool, ()> {
+        let piece = self.board.get_cell(from).ok_or(())?.last().ok_or(())?;
+
+        match piece.bug {
+            Bug::Bee => todo!(),
+            Bug::Beetle => todo!(),
+            Bug::Grasshopper => todo!(),
+            Bug::Spider => todo!(),
+            Bug::Ant => {
+                let walkable = self.board.walkable_without(from);
+
+                // Traverse the tree
+                let mut checked: HashSet<Coordinate> = HashSet::new();
+                let mut to_check = vec![from];
+
+                while let Some(current) = to_check.pop() {
+                    let neighbor_coordinates = Board::neighbor_coordinates(current);
+                    let possible_neighbors = walkable.intersection(&neighbor_coordinates);
+
+                    for &neighbor in possible_neighbors {
+                        if neighbor == to {
+                            return Ok(true);
+                        }
+
+                        if !checked.contains(&neighbor) {
+                            to_check.push(neighbor);
+                        }
+                    }
+
+                    checked.insert(current);
+                }
+                return Ok(false);
+            }
+        }
+
         todo!()
     }
 }

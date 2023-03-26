@@ -4,6 +4,8 @@ use std::{
     ops::Sub,
 };
 
+const RELATIVE_NEIGHBORS: [(i8, i8); 6] = [(1, 0), (-1, 0), (-1, 1), (0, 1), (-1, -1), (0, -1)];
+
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub(crate) struct Coordinate {
     x: i8,
@@ -74,10 +76,8 @@ impl<'a> Board<'a> {
             .collect()
     }
 
-    fn neighbor_coordinates(Coordinate { x, y }: Coordinate) -> Vec<Coordinate> {
-        let relative_positions = [(1, 0), (-1, 0), (-1, 1), (0, 1), (-1, -1), (0, -1)];
-
-        relative_positions
+    pub(crate) fn neighbor_coordinates(Coordinate { x, y }: Coordinate) -> HashSet<Coordinate> {
+        RELATIVE_NEIGHBORS
             .into_iter()
             .map(move |(dx, dy)| Coordinate {
                 x: x + dx,
@@ -86,27 +86,45 @@ impl<'a> Board<'a> {
             .collect()
     }
 
-    // fn hive_without(&self, )
+    pub(crate) fn is_neighboor(
+        Coordinate { x: ax, y: ay }: Coordinate,
+        Coordinate { x: bx, y: by }: Coordinate,
+    ) -> bool {
+        RELATIVE_NEIGHBORS.contains(&(ax - bx, ay - by))
+    }
+
+    fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
+        HashSet::from_iter(self.cells.iter().flat_map(|(&c, _)| {
+            let c = c;
+            if c == coordinate || self.get_cell(coordinate)?.len() == 0 {
+                None
+            } else {
+                Some(c)
+            }
+        }))
+    }
 
     // Returns the outline walkable cells without taking into account the top piece at the position given
     pub(crate) fn walkable_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
-        let hive_without: HashSet<Coordinate> =
-            HashSet::from_iter(self.cells.iter().flat_map(|(&c, _)| {
-                let c = c;
-                if c == coordinate || self.get_cell(coordinate)?.len() == 0 {
-                    None
-                } else {
-                    Some(c)
-                }
-            }));
+        let hive_without = self.hive_without(coordinate);
 
-        let neighbors: HashSet<Coordinate> = HashSet::from_iter(
-            hive_without
-                .iter()
-                .flat_map(|&c| Self::neighbor_coordinates(c)),
-        );
+        let neighbors: HashSet<Coordinate> = hive_without
+            .iter()
+            .flat_map(|&c| Self::neighbor_coordinates(c))
+            .collect();
 
         neighbors.sub(&hive_without)
+    }
+
+    pub(crate) fn hive_and_walkable_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
+        let hive_without = self.hive_without(coordinate);
+
+        let neighbors: HashSet<Coordinate> = hive_without
+            .iter()
+            .flat_map(|&c| Self::neighbor_coordinates(c))
+            .collect();
+
+        neighbors.union(&hive_without).copied().collect()
     }
 }
 
