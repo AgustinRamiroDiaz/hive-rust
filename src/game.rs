@@ -81,7 +81,31 @@ impl<'a> Game<'a> {
             Bug::Bee => todo!(),
             Bug::Beetle => todo!(),
             Bug::Grasshopper => todo!(),
-            Bug::Spider => todo!(),
+            Bug::Spider => {
+                let walkable = self.board.walkable_without(from);
+
+                let mut paths = vec![vec![from]];
+
+                for _ in 0..3 {
+                    let mut new_paths = vec![];
+
+                    for path in paths {
+                        let last = path.last().ok_or(())?;
+
+                        let neighbor_coordinates = Board::neighbor_coordinates(*last);
+                        let walkable_neighbors = walkable.intersection(&neighbor_coordinates);
+                        let possible_neighbors = walkable_neighbors.filter(|&c| !path.contains(c));
+
+                        for &neighbor in possible_neighbors {
+                            let mut new_path = path.clone();
+                            new_path.push(neighbor);
+                            new_paths.push(new_path);
+                        }
+                    }
+
+                    paths = new_paths;
+                }
+            }
             Bug::Ant => {
                 let walkable = self.board.walkable_without(from);
 
