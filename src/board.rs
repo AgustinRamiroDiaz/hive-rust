@@ -34,7 +34,11 @@ impl<'a> Board<'a> {
     }
 
     pub(crate) fn get_cell(&self, coordinate: Coordinate) -> Option<&Cell> {
-        self.cells.get(&coordinate.into())
+        self.cells.get(&coordinate)
+    }
+
+    pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&piece::Piece> {
+        self.get_cell(coordinate)?.last().copied()
     }
 
     pub(crate) fn put_piece(&mut self, p: &'a piece::Piece, coordinate: Coordinate) {
@@ -65,7 +69,7 @@ impl<'a> Board<'a> {
     fn neighbors(&self, coordinate: Coordinate) -> Vec<(Coordinate, &piece::Piece)> {
         Self::neighbor_coordinates(coordinate)
             .into_iter()
-            .flat_map(|c| Some((c, *self.get_cell(coordinate)?.last()?)))
+            .flat_map(|c| Some((c, self.get_top_piece(coordinate)?)))
             .collect()
     }
 
@@ -95,8 +99,7 @@ impl<'a> Board<'a> {
 
     fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
         HashSet::from_iter(self.cells.iter().flat_map(|(&c, _)| {
-            let c = c;
-            if c == coordinate || self.get_cell(coordinate)?.len() == 0 {
+            if c == coordinate || self.get_top_piece(coordinate).is_none() {
                 None
             } else {
                 Some(c)

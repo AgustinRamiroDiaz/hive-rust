@@ -35,7 +35,7 @@ impl<'a> Game<'a> {
             return Err(GameError::NotYourTurn);
         }
 
-        if self.board.get_cell(coordinate).is_some() {
+        if self.board.get_top_piece(coordinate).is_some() {
             return Err(GameError::SpawnedOnTopOfAnotherPiece);
         }
 
@@ -75,7 +75,7 @@ impl<'a> Game<'a> {
     }
 
     fn can_move(&self, from: Coordinate, to: Coordinate) -> Result<bool, ()> {
-        let piece = self.board.get_cell(from).ok_or(())?.last().ok_or(())?;
+        let piece = self.board.get_top_piece(from).ok_or(())?;
 
         match piece.bug {
             Bug::Bee => {
