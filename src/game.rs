@@ -65,15 +65,23 @@ impl<'a> Game<'a> {
         }
 
         self.board.put_piece(piece, coordinate);
-        self.turn = !self.turn.clone();
-        self.turn_number += 1;
+        self.end_turn();
         Ok(())
     }
 
-    fn move_top(&self, from_x: i8, from_y: i8, to_x: i8, to_y: i8) -> Result<(), GameError> {
-        todo!()
+    fn end_turn(&mut self) {
+        self.turn = !self.turn.clone();
+        self.turn_number += 1;
     }
 
+    fn move_top(&mut self, from_x: i8, from_y: i8, to_x: i8, to_y: i8) -> Result<(), GameError> {
+        todo!();
+
+        self.end_turn();
+        Ok(())
+    }
+
+    // TODO: check sliding rules
     fn can_move(&self, from: Coordinate, to: Coordinate) -> Result<bool, ()> {
         let piece = self.board.get_top_piece(from).ok_or(())?;
 
@@ -100,7 +108,7 @@ impl<'a> Game<'a> {
                     let mut new_paths = vec![];
 
                     for path in paths {
-                        let last = path.last().ok_or(())?;
+                        let last = path.last().ok_or(())?; // TODO: this should never fail
 
                         let neighbor_coordinates = Board::neighbor_coordinates(*last);
                         let walkable_neighbors = walkable.intersection(&neighbor_coordinates);
