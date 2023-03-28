@@ -78,8 +78,18 @@ impl<'a> Game<'a> {
         let piece = self.board.get_cell(from).ok_or(())?.last().ok_or(())?;
 
         match piece.bug {
-            Bug::Bee => todo!(),
-            Bug::Beetle => todo!(),
+            Bug::Bee => {
+                let walkable = self.board.walkable_without(from);
+
+                let neighbor_coordinates = Board::neighbor_coordinates(from);
+                let walkable_neighbors = walkable.intersection(&neighbor_coordinates);
+
+                Ok(walkable_neighbors.into_iter().any(|&c| c == to))
+            }
+            Bug::Beetle => {
+                let hive_and_walkable = self.board.hive_and_walkable_without(from);
+                Ok(hive_and_walkable.contains(&to))
+            }
             Bug::Grasshopper => todo!(),
             Bug::Spider => {
                 let walkable = self.board.walkable_without(from);
@@ -105,6 +115,8 @@ impl<'a> Game<'a> {
 
                     paths = new_paths;
                 }
+
+                Ok(paths.iter().flat_map(|p| p.last()).any(|&c| c == to))
             }
             Bug::Ant => {
                 let walkable = self.board.walkable_without(from);
@@ -129,11 +141,9 @@ impl<'a> Game<'a> {
 
                     checked.insert(current);
                 }
-                return Ok(false);
+                Ok(false)
             }
         }
-
-        todo!()
     }
 }
 
