@@ -89,15 +89,16 @@ impl<'a> Game<'a> {
             Bug::Bee => {
                 let walkable = self.board.walkable_without(from);
 
-                let neighbor_coordinates = Board::neighbor_coordinates(from);
-                let walkable_neighbors = walkable.intersection(&neighbor_coordinates);
+                let hive = self.board.hive_without(from);
 
-                Ok(walkable_neighbors.into_iter().any(|&c| c == to))
+                let neighbor_coordinates = Board::neighbor_coordinates(from);
+                let slidable_neighbors = walkable
+                    .intersection(&neighbor_coordinates)
+                    .filter(|&c| Board::can_slide(from, *c, &hive));
+
+                Ok(slidable_neighbors.into_iter().any(|&c| c == to))
             }
-            Bug::Beetle => {
-                let hive_and_walkable = self.board.hive_and_walkable_without(from);
-                Ok(hive_and_walkable.contains(&to))
-            }
+            Bug::Beetle => Ok(self.board.hive_and_walkable_without(from).contains(&to)),
             Bug::Grasshopper => todo!(),
             Bug::Spider => {
                 let walkable = self.board.walkable_without(from);
@@ -108,13 +109,15 @@ impl<'a> Game<'a> {
                     let mut new_paths = vec![];
 
                     for path in paths {
-                        let last = path.last().ok_or(())?; // TODO: this should never fail
+                        let last = *path.last().ok_or(())?; // TODO: this should never fail
 
-                        let neighbor_coordinates = Board::neighbor_coordinates(*last);
+                        let neighbor_coordinates = Board::neighbor_coordinates(last);
                         let walkable_neighbors = walkable.intersection(&neighbor_coordinates);
-                        let possible_neighbors = walkable_neighbors.filter(|&c| !path.contains(c));
+                        let slidable_neighbors = walkable_neighbors
+                            .filter(|&c| !path.contains(c))
+                            .filter(|&c| Board::can_slide(last, *c, &walkable));
 
-                        for &neighbor in possible_neighbors {
+                        for &neighbor in slidable_neighbors {
                             let mut new_path = path.clone();
                             new_path.push(neighbor);
                             new_paths.push(new_path);
@@ -135,9 +138,11 @@ impl<'a> Game<'a> {
 
                 while let Some(current) = to_check.pop() {
                     let neighbor_coordinates = Board::neighbor_coordinates(current);
-                    let possible_neighbors = walkable.intersection(&neighbor_coordinates);
+                    let slidable_neighbors = walkable
+                        .intersection(&neighbor_coordinates)
+                        .filter(|&c| Board::can_slide(current, *c, &walkable));
 
-                    for &neighbor in possible_neighbors {
+                    for &neighbor in slidable_neighbors {
                         if neighbor == to {
                             return Ok(true);
                         }

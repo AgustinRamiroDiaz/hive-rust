@@ -4,7 +4,8 @@ use std::{
     ops::Sub,
 };
 
-const RELATIVE_NEIGHBORS: [(i8, i8); 6] = [(1, 0), (-1, 0), (-1, 1), (0, 1), (-1, -1), (0, -1)];
+const RELATIVE_NEIGHBORS_CLOCKWISE: [(i8, i8); 6] =
+    [(-1, 0), (-1, 1), (0, 1), (1, 0), (1, -1), (0, -1)];
 
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub(crate) struct Coordinate {
@@ -81,7 +82,7 @@ impl<'a> Board<'a> {
     }
 
     pub(crate) fn neighbor_coordinates(Coordinate { x, y }: Coordinate) -> HashSet<Coordinate> {
-        RELATIVE_NEIGHBORS
+        RELATIVE_NEIGHBORS_CLOCKWISE
             .into_iter()
             .map(move |(dx, dy)| Coordinate {
                 x: x + dx,
@@ -94,10 +95,10 @@ impl<'a> Board<'a> {
         Coordinate { x: ax, y: ay }: Coordinate,
         Coordinate { x: bx, y: by }: Coordinate,
     ) -> bool {
-        RELATIVE_NEIGHBORS.contains(&(ax - bx, ay - by))
+        RELATIVE_NEIGHBORS_CLOCKWISE.contains(&(ax - bx, ay - by))
     }
 
-    fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
+    pub(crate) fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
         HashSet::from_iter(self.cells.iter().flat_map(|(&c, _)| {
             if c == coordinate || self.get_top_piece(coordinate).is_none() {
                 None
@@ -128,6 +129,33 @@ impl<'a> Board<'a> {
             .collect();
 
         neighbors.union(&hive_without).copied().collect()
+    }
+
+    pub(crate) fn can_slide(from: Coordinate, to: Coordinate, hive: &HashSet<Coordinate>) -> bool {
+        let relative_position = (to.x - from.x, to.y - from.y);
+
+        // TODO: remove unwrap
+        let relative_neighbors_position = RELATIVE_NEIGHBORS_CLOCKWISE
+            .iter()
+            .position(|&p| p == relative_position)
+            .unwrap();
+
+        let relative_right_neighbor =
+            RELATIVE_NEIGHBORS_CLOCKWISE[(relative_neighbors_position + 1) % 6];
+        let relative_left_neighbor =
+            RELATIVE_NEIGHBORS_CLOCKWISE[(relative_neighbors_position - 1) % 6];
+
+        let right_neighbor = hive.get(&Coordinate {
+            x: from.x + relative_right_neighbor.0,
+            y: from.y + relative_right_neighbor.1,
+        });
+
+        let left_neighbor = hive.get(&Coordinate {
+            x: from.x + relative_left_neighbor.0,
+            y: from.y + relative_left_neighbor.1,
+        });
+
+        return left_neighbor.is_some() && right_neighbor.is_some();
     }
 }
 
