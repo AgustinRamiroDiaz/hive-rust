@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt::Error;
+use std::vec;
 
-use crate::board::{Board, Coordinate};
+use crate::board::{self, Board, Coordinate};
 use crate::piece::{Bug, Color, Piece};
 
 struct Game<'a> {
@@ -99,7 +100,29 @@ impl<'a> Game<'a> {
                 Ok(slidable_neighbors.into_iter().any(|&c| c == to))
             }
             Bug::Beetle => Ok(self.board.hive_and_walkable_without(from).contains(&to)),
-            Bug::Grasshopper => todo!(),
+            Bug::Grasshopper => {
+                let walkable = self.board.walkable_without(from);
+                let hive = self.board.hive_without(from);
+
+                let possible_destinies =
+                    board::RELATIVE_NEIGHBORS_CLOCKWISE
+                        .iter()
+                        .flat_map(|&direction| {
+                            let position = from + direction;
+
+                            if !walkable.contains(&position) {
+                                return None;
+                            }
+
+                            let mut last = position;
+                            while hive.contains(&last) {
+                                last = last + direction;
+                            }
+                            Some(last)
+                        });
+
+                Ok(possible_destinies.into_iter().any(|c| c == to))
+            }
             Bug::Spider => {
                 let walkable = self.board.walkable_without(from);
 

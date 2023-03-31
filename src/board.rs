@@ -4,8 +4,15 @@ use std::{
     ops::Sub,
 };
 
-const RELATIVE_NEIGHBORS_CLOCKWISE: [(i8, i8); 6] =
-    [(-1, 0), (-1, 1), (0, 1), (1, 0), (1, -1), (0, -1)];
+// [(-1, 0), (-1, 1), (0, 1), (1, 0), (1, -1), (0, -1)]
+pub(crate) const RELATIVE_NEIGHBORS_CLOCKWISE: [Coordinate; 6] = [
+    Coordinate { x: -1, y: 0 },
+    Coordinate { x: -1, y: 1 },
+    Coordinate { x: 0, y: 1 },
+    Coordinate { x: 1, y: 0 },
+    Coordinate { x: 1, y: -1 },
+    Coordinate { x: 0, y: -1 },
+];
 
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub(crate) struct Coordinate {
@@ -16,6 +23,28 @@ pub(crate) struct Coordinate {
 impl From<(i8, i8)> for Coordinate {
     fn from((x, y): (i8, i8)) -> Self {
         Self { x, y }
+    }
+}
+
+impl std::ops::Add for Coordinate {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl std::ops::Sub for Coordinate {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
     }
 }
 
@@ -81,21 +110,15 @@ impl<'a> Board<'a> {
             .collect()
     }
 
-    pub(crate) fn neighbor_coordinates(Coordinate { x, y }: Coordinate) -> HashSet<Coordinate> {
+    pub(crate) fn neighbor_coordinates(from: Coordinate) -> HashSet<Coordinate> {
         RELATIVE_NEIGHBORS_CLOCKWISE
             .into_iter()
-            .map(move |(dx, dy)| Coordinate {
-                x: x + dx,
-                y: y + dy,
-            })
+            .map(move |delta| from + delta)
             .collect()
     }
 
-    pub(crate) fn is_neighboor(
-        Coordinate { x: ax, y: ay }: Coordinate,
-        Coordinate { x: bx, y: by }: Coordinate,
-    ) -> bool {
-        RELATIVE_NEIGHBORS_CLOCKWISE.contains(&(ax - bx, ay - by))
+    pub(crate) fn is_neighboor(a: Coordinate, b: Coordinate) -> bool {
+        RELATIVE_NEIGHBORS_CLOCKWISE.contains(&(a - b))
     }
 
     pub(crate) fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
@@ -132,7 +155,7 @@ impl<'a> Board<'a> {
     }
 
     pub(crate) fn can_slide(from: Coordinate, to: Coordinate, hive: &HashSet<Coordinate>) -> bool {
-        let relative_position = (to.x - from.x, to.y - from.y);
+        let relative_position = to - from;
 
         // TODO: remove unwrap
         let relative_neighbors_position = RELATIVE_NEIGHBORS_CLOCKWISE
@@ -145,15 +168,9 @@ impl<'a> Board<'a> {
         let relative_left_neighbor =
             RELATIVE_NEIGHBORS_CLOCKWISE[(relative_neighbors_position - 1) % 6];
 
-        let right_neighbor = hive.get(&Coordinate {
-            x: from.x + relative_right_neighbor.0,
-            y: from.y + relative_right_neighbor.1,
-        });
+        let right_neighbor = hive.get(&(from + relative_right_neighbor));
 
-        let left_neighbor = hive.get(&Coordinate {
-            x: from.x + relative_left_neighbor.0,
-            y: from.y + relative_left_neighbor.1,
-        });
+        let left_neighbor = hive.get(&(from + relative_left_neighbor));
 
         return left_neighbor.is_some() && right_neighbor.is_some();
     }
