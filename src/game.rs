@@ -20,8 +20,10 @@ enum GameError {
     SpawnedInOpponentsHive,
     SpawnedOnTopOfAnotherPiece,
     SpawnedOutOfHive,
+    HiveDisconnected,
 }
 
+// TODO: handle win and block conditions
 impl<'a> Game<'a> {
     fn new() -> Self {
         Game {
@@ -30,8 +32,7 @@ impl<'a> Game<'a> {
             turn_number: 1,
         }
     }
-    fn put(&mut self, piece: &'a Piece, x: i8, y: i8) -> Result<(), GameError> {
-        let coordinate = Coordinate::from((x, y));
+    fn put(&mut self, piece: &'a Piece, coordinate: Coordinate) -> Result<(), GameError> {
         if piece.color != self.turn {
             return Err(GameError::NotYourTurn);
         }
@@ -75,18 +76,49 @@ impl<'a> Game<'a> {
         self.turn_number += 1;
     }
 
-    fn move_top(&mut self, from_x: i8, from_y: i8, to_x: i8, to_y: i8) -> Result<(), GameError> {
-        todo!();
+    fn move_top(&mut self, from: Coordinate, to: Coordinate) -> Result<(), GameError> {
+        if self.board.cells.values().len() == 0 {
+            todo!()
+        }
+
+        let piece = self
+            .board
+            .get_top_piece(from)
+            .ok_or(GameError::NoPieceAtLocation)?;
+
+        if piece.color != self.turn {
+            return Err(GameError::NotYourTurn);
+        }
+
+        if !self
+            .can_move(from, to)
+            .or_else(|_| Err(GameError::InvalidMove))?
+        {
+            return Err(GameError::InvalidMove);
+        }
+
+        // TODO: remove repetitive errors
+        self.board
+            .move_top_piece(from, to)
+            .or_else(|_| Err(GameError::NoPieceAtLocation))?;
+
+        let hive = self.board.hive();
+        if hive
+            .iter()
+            .any(|&c| self.board.neighbor_pieces(c).len() == 0)
+        {
+            self.board.move_top_piece(to, from).unwrap(); // TODO: remove unwrap
+            return Err(GameError::HiveDisconnected);
+        }
 
         self.end_turn();
         Ok(())
     }
 
-    // TODO: check sliding rules
     fn can_move(&self, from: Coordinate, to: Coordinate) -> Result<bool, ()> {
         let piece = self.board.get_top_piece(from).ok_or(())?;
 
-        match piece.bug {
+        Ok(match piece.bug {
             Bug::Bee => {
                 let walkable = self.board.walkable_without(from);
 
@@ -97,9 +129,9 @@ impl<'a> Game<'a> {
                     .intersection(&neighbor_coordinates)
                     .filter(|&c| Board::can_slide(from, *c, &hive));
 
-                Ok(slidable_neighbors.into_iter().any(|&c| c == to))
+                slidable_neighbors.into_iter().any(|&c| c == to)
             }
-            Bug::Beetle => Ok(self.board.hive_and_walkable_without(from).contains(&to)),
+            Bug::Beetle => self.board.hive_and_walkable_without(from).contains(&to),
             Bug::Grasshopper => {
                 let walkable = self.board.walkable_without(from);
                 let hive = self.board.hive_without(from);
@@ -121,7 +153,7 @@ impl<'a> Game<'a> {
                             Some(last)
                         });
 
-                Ok(possible_destinies.into_iter().any(|c| c == to))
+                possible_destinies.into_iter().any(|c| c == to)
             }
             Bug::Spider => {
                 let walkable = self.board.walkable_without(from);
@@ -150,7 +182,7 @@ impl<'a> Game<'a> {
                     paths = new_paths;
                 }
 
-                Ok(paths.iter().flat_map(|p| p.last()).any(|&c| c == to))
+                paths.iter().flat_map(|p| p.last()).any(|&c| c == to)
             }
             Bug::Ant => {
                 let walkable = self.board.walkable_without(from);
@@ -177,9 +209,9 @@ impl<'a> Game<'a> {
 
                     checked.insert(current);
                 }
-                Ok(false)
+                false
             }
-        }
+        })
     }
 }
 
@@ -212,40 +244,47 @@ fn simple_game() {
         color: Color::White,
     };
 
-    game.put(&black_bee, 0, 0).unwrap(); // black bee is placed at (0, 0)
-
-    assert_eq!(game.put(&black_bee, 0, 0), Err(GameError::NotYourTurn)); // it's not black's turn
-
-    game.put(&white_bee, 1, 0).unwrap(); // white bee is placed at (1, 0)
+    game.put(&black_bee, (0, 0).into()).unwrap(); // black bee is placed at (0, 0)
 
     assert_eq!(
-        game.put(&black_beetle, 2, 0),
+        game.put(&black_bee, (0, 0).into()),
+        Err(GameError::NotYourTurn)
+    ); // it's not black's turn
+
+    game.put(&white_bee, (1, 0).into()).unwrap(); // white bee is placed at (1, 0)
+
+    assert_eq!(
+        game.put(&black_beetle, (2, 0).into()),
         Err(GameError::SpawnedInOpponentsHive)
     ); // black beetle cannot spawn in white's hive
 
     assert_eq!(
-        game.put(&black_beetle, 0, 0),
+        game.put(&black_beetle, (0, 0).into()),
         Err(GameError::SpawnedOnTopOfAnotherPiece)
     ); // pieces cannot spawn on top of another piece
 
-    game.put(&black_beetle, -1, 0).unwrap(); // black beetle is placed at (-1, 0)
+    game.put(&black_beetle, (-1, 0).into()).unwrap(); // black beetle is placed at (-1, 0)
 
-    game.put(&white_beetle, 2, 0).unwrap(); // white beetle is placed at (2, 0)
-    game.put(&black_ant, -1, 1).unwrap(); // black ant is placed at (-1, 1)
-    game.move_top(-1, 1, 1, 1).unwrap(); // black ant moves to (1, 1)
+    game.put(&white_beetle, (2, 0).into()).unwrap(); // white beetle is placed at (2, 0)
+    game.put(&black_ant, (-1, 1).into()).unwrap(); // black ant is placed at (-1, 1)
 
-    assert_eq!(game.move_top(1, 1, 1, 1), Err(GameError::InvalidMove)); // cannot move to the same location
+    game.move_top((2, 0).into(), (1, 0).into()).unwrap(); // white beetle moves to (1, 0), stacking on top of the white bee
 
-    game.move_top(2, 0, 1, 0).unwrap(); // white beetle moves to (1, 0), stacking on top of the white bee
-
-    game.move_top(2, 0, 1, 0).unwrap(); // black beetle moves to (0, 0), stacking on top of the black beetle
-
-    game.move_top(1, 0, 0, 0).unwrap(); // white beetle moves to (0, 0), stacking on top of the black beetle
+    game.move_top((-1, 1).into(), (1, 1).into()).unwrap(); // black ant moves to (1, 1)
 
     assert_eq!(
-        game.move_top(-100, -100, 5, 0),
+        game.move_top((1, 1).into(), (1, 1).into()),
+        Err(GameError::InvalidMove)
+    ); // cannot move to the same location
+
+    game.move_top((2, 0).into(), (1, 0).into()).unwrap(); // black beetle moves to (0, 0), stacking on top of the black beetle
+
+    game.move_top((1, 0).into(), (0, 0).into()).unwrap(); // white beetle moves to (0, 0), stacking on top of the black beetle
+
+    assert_eq!(
+        game.move_top((-10, -10).into(), (5, 0).into()),
         Err(GameError::NoPieceAtLocation)
     );
 
-    game.put(&white_grasshopper, -1, 0).unwrap(); // white grasshopper is placed at (-1, 0)
+    game.put(&white_grasshopper, (-1, 0).into()).unwrap(); // white grasshopper is placed at (-1, 0)
 }

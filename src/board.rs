@@ -99,7 +99,12 @@ impl<'a> Board<'a> {
     fn neighbors(&self, from: Coordinate) -> Vec<(Coordinate, &piece::Piece)> {
         Self::neighbor_coordinates(from)
             .into_iter()
-            .flat_map(|c| Some((c, self.get_top_piece(c)?)))
+            .flat_map(|neighbor_coordinate| {
+                Some((
+                    neighbor_coordinate,
+                    self.get_top_piece(neighbor_coordinate)?,
+                ))
+            })
             .collect()
     }
 
@@ -121,14 +126,18 @@ impl<'a> Board<'a> {
         RELATIVE_NEIGHBORS_CLOCKWISE.contains(&(a - b))
     }
 
-    pub(crate) fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
+    pub(crate) fn hive(&self) -> HashSet<Coordinate> {
         HashSet::from_iter(self.cells.iter().flat_map(|(&c, _)| {
-            if c == coordinate || self.get_top_piece(coordinate).is_none() {
-                None
-            } else {
+            if self.get_top_piece(c).is_some() {
                 Some(c)
+            } else {
+                None
             }
         }))
+    }
+
+    pub(crate) fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
+        self.hive().sub(&[coordinate].into())
     }
 
     // Returns the outline walkable cells without taking into account the top piece at the position given
