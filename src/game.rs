@@ -24,6 +24,7 @@ enum GameError {
 }
 
 // TODO: handle win and block conditions
+// TODO: handle piece pool
 impl<'a> Game<'a> {
     fn new() -> Self {
         Game {
