@@ -96,10 +96,10 @@ impl<'a> Board<'a> {
         Ok(())
     }
 
-    fn neighbors(&self, coordinate: Coordinate) -> Vec<(Coordinate, &piece::Piece)> {
-        Self::neighbor_coordinates(coordinate)
+    fn neighbors(&self, from: Coordinate) -> Vec<(Coordinate, &piece::Piece)> {
+        Self::neighbor_coordinates(from)
             .into_iter()
-            .flat_map(|c| Some((c, self.get_top_piece(coordinate)?)))
+            .flat_map(|c| Some((c, self.get_top_piece(c)?)))
             .collect()
     }
 
