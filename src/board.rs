@@ -175,7 +175,7 @@ impl<'a> Board<'a> {
         let relative_right_neighbor =
             RELATIVE_NEIGHBORS_CLOCKWISE[(relative_neighbors_position + 1) % 6];
         let relative_left_neighbor =
-            RELATIVE_NEIGHBORS_CLOCKWISE[(relative_neighbors_position - 1) % 6];
+            RELATIVE_NEIGHBORS_CLOCKWISE[(relative_neighbors_position + 5) % 6];
 
         let right_neighbor = hive.get(&(from + relative_right_neighbor));
 
