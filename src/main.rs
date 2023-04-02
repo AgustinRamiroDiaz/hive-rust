@@ -2,6 +2,7 @@ mod board;
 mod game;
 mod piece;
 
+use stylist::Style;
 use yew::{html, Component, Context, Html};
 // Define the possible messages which can be sent to the component
 pub enum Msg {
@@ -10,6 +11,7 @@ pub enum Msg {
 
 pub struct App {
     selected: Option<(i8, i8)>,
+    game: game::Game<'static>,
 }
 
 impl Component for App {
@@ -17,7 +19,10 @@ impl Component for App {
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
-        Self { selected: None }
+        Self {
+            selected: None,
+            game: game::Game::new(),
+        }
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -26,6 +31,7 @@ impl Component for App {
                 if self.selected == Some(pos) {
                     self.selected = None;
                 } else {
+                    // TODO: should move here
                     self.selected = Some(pos);
                 }
                 true // Return true to cause the displayed change to update
@@ -40,19 +46,19 @@ impl Component for App {
                 {
                 for (0..4).map(|row| {
                     html! {
-                        <tr>
-                        {
-                        for (0..4).map(|column| {
-                                html! {
-                                    <td>
-                                    <button class="button" onclick={ctx.link().callback(move |_| Msg::Select((row, column)))}>
-                                    { "Not" }
-                                    </button>
-                                </td>
-                                }
-                        })
-                        }
-                        </tr>
+                    <tr>
+                    {
+                    for (0..4).map(|column| {
+                            html! {
+                            <td>
+                            <button class="button" onclick={ctx.link().callback(move |_| Msg::Select((row, column)))}>
+                            { "Not" }
+                            </button>
+                            </td>
+                            }
+                    })
+                    }
+                    </tr>
                     }
                 })
                 }
@@ -60,13 +66,13 @@ impl Component for App {
 
 
                 <p>
-                    {
-                        if let Some(pos) = self.selected {
-                            format!("Selected: {:?}", pos)
-                        } else {
-                            "No selection".to_string()
-                        }
+                {
+                    if let Some(pos) = self.selected {
+                        format!("Selected: {:?}", pos)
+                    } else {
+                        "No selection".to_string()
                     }
+                }
                 </p>
             </div>
         }

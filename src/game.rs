@@ -5,14 +5,14 @@ use std::vec;
 use crate::board::{self, Board, Coordinate};
 use crate::piece::{Bug, Color, Piece};
 
-struct Game<'a> {
+pub(crate) struct Game<'a> {
     turn: Color,
     board: Board<'a>,
     turn_number: u8,
 }
 
 #[derive(Debug, PartialEq)]
-enum GameError {
+pub(crate) enum GameError {
     NotYourTurn,
     NoPieceAtLocation,
     InvalidMove,
@@ -26,14 +26,18 @@ enum GameError {
 // TODO: handle win and block conditions
 // TODO: handle piece pool
 impl<'a> Game<'a> {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Game {
             turn: Color::Black,
             board: Board::new(),
             turn_number: 1,
         }
     }
-    fn put(&mut self, piece: &'a Piece, coordinate: Coordinate) -> Result<(), GameError> {
+    pub(crate) fn put(
+        &mut self,
+        piece: &'a Piece,
+        coordinate: Coordinate,
+    ) -> Result<(), GameError> {
         if piece.color != self.turn {
             return Err(GameError::NotYourTurn);
         }
@@ -77,7 +81,7 @@ impl<'a> Game<'a> {
         self.turn_number += 1;
     }
 
-    fn move_top(&mut self, from: Coordinate, to: Coordinate) -> Result<(), GameError> {
+    pub(crate) fn move_top(&mut self, from: Coordinate, to: Coordinate) -> Result<(), GameError> {
         if self.board.cells.values().len() == 0 {
             todo!()
         }
