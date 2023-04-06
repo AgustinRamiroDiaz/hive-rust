@@ -7,6 +7,7 @@ use crate::piece::{Bug, Color, Piece};
 
 pub(crate) struct Game<'a> {
     turn: Color,
+    won: Option<Color>,
     board: Board<'a>,
     turn_number: u8,
 }
@@ -21,14 +22,16 @@ pub(crate) enum GameError {
     SpawnedOnTopOfAnotherPiece,
     SpawnedOutOfHive,
     HiveDisconnected,
+    PlayerWon(Color),
 }
 
-// TODO: handle win and block conditions
+// TODO: handle block conditions
 // TODO: handle piece pool
 impl<'a> Game<'a> {
     pub(crate) fn new() -> Self {
         Game {
             turn: Color::Black,
+            won: None,
             board: Board::new(),
             turn_number: 1,
         }
@@ -38,6 +41,10 @@ impl<'a> Game<'a> {
         piece: &'a Piece,
         coordinate: Coordinate,
     ) -> Result<(), GameError> {
+        if let Some(winner) = self.won.clone() {
+            return Err(GameError::PlayerWon(winner));
+        }
+
         if piece.color != self.turn {
             return Err(GameError::NotYourTurn);
         }
@@ -77,11 +84,28 @@ impl<'a> Game<'a> {
     }
 
     fn end_turn(&mut self) {
+        for color in [Color::Black, Color::White] {
+            let bee = self
+                .board
+                .find(|p| p.color == Color::Black && p.bug == Bug::Bee);
+
+            if let Some(&coordinate) = bee.first() {
+                // TODO: what happens if there are multiple bees?
+                if self.board.neighbor_pieces(coordinate).len() == 6 {
+                    self.won = Some(!color);
+                }
+            }
+        }
+
         self.turn = !self.turn.clone();
         self.turn_number += 1;
     }
 
     pub(crate) fn move_top(&mut self, from: Coordinate, to: Coordinate) -> Result<(), GameError> {
+        if let Some(winner) = self.won.clone() {
+            return Err(GameError::PlayerWon(winner));
+        }
+
         if self.board.cells.values().len() == 0 {
             todo!()
         }

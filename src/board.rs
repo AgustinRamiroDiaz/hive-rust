@@ -183,6 +183,18 @@ impl<'a> Board<'a> {
 
         return left_neighbor.is_some() && right_neighbor.is_some();
     }
+
+    pub(crate) fn find<F>(&self, filter: F) -> Vec<Coordinate>
+    where
+        F: Fn(&piece::Piece) -> bool,
+    {
+        self.cells
+            .iter()
+            .flat_map(|(&c, cell)| Some((c, cell.last()?)))
+            .filter(|(c, &p)| filter(p))
+            .map(|(c, _)| c)
+            .collect()
+    }
 }
 
 #[test]
