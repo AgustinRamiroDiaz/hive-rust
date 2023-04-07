@@ -23,11 +23,11 @@ pub(crate) enum GameError {
     SpawnedOnTopOfAnotherPiece,
     SpawnedOutOfHive,
     HiveDisconnected,
+    PieceNotInPool,
     PlayerWon(Color),
 }
 
 // TODO: handle block conditions
-// TODO: handle piece pool
 impl<'a> Game<'a> {
     pub(crate) fn new(pool: Vec<&'a Piece>) -> Self {
         Game {
@@ -78,6 +78,12 @@ impl<'a> Game<'a> {
 
         if is_fourth_turn && piece.bug != Bug::Bee && colored_queen_is_not_placed {
             return Err(GameError::QueenMustBePlacedBeforeFifthTurn);
+        }
+
+        if let Some(index) = self.pool.iter().position(|&p| p == piece) {
+            self.pool.swap_remove(index);
+        } else {
+            return Err(GameError::PieceNotInPool);
         }
 
         self.board.put_piece(piece, coordinate);
