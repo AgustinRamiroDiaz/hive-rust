@@ -5,12 +5,14 @@ mod piece;
 use yew::prelude::*;
 use yew::{html, Component, Context, Html};
 // Define the possible messages which can be sent to the component
+#[derive(Debug, Clone)]
 enum Msg {
-    Select((i8, i8)),
+    Coordinate((i8, i8)),
+    Piece(piece::Piece), // TODO: this should be a reference
 }
 
 struct App {
-    selected: Option<(i8, i8)>,
+    selected: Option<Msg>,
     game: game::Game<'static>,
     game_error: String,
 }
@@ -122,27 +124,38 @@ impl Component for App {
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         self.game_error = "".to_string();
-        match msg {
-            Msg::Select(pos) => {
-                if self.selected == Some(pos) {
-                    self.selected = None;
-                } else {
-                    // TODO: should move here
-                    self.game
-                        .put(
-                            &piece::Piece {
-                                bug: piece::Bug::Bee,
-                                color: piece::Color::Black,
-                            },
-                            pos.into(),
-                        )
-                        .unwrap_or_else(|e| self.game_error = format!("{:#?}", e));
+        match (msg, self.selected.clone()) {
+            (Msg::Coordinate(pos), Some(Msg::Piece(p))) => {
+                todo!();
 
-                    self.selected = Some(pos);
+                match self.game.put(&p, pos.into()) {
+                    Ok(_) => {
+                        self.selected = None;
+                    }
+                    Err(e) => self.game_error = format!("{:?}", e),
                 }
-                true // Return true to cause the displayed change to update
+            }
+            (s, None) => {
+                self.selected = Some(s);
+            }
+            (Msg::Piece(p), Some(Msg::Coordinate(pos))) => {
+                self.selected = Some(Msg::Piece(p)); // we flush the selected position
+            }
+            (Msg::Coordinate(to), Some(Msg::Coordinate(from))) => {
+                todo!();
+
+                match self.game.move_top(from.into(), to.into()) {
+                    Ok(_) => {
+                        self.selected = None;
+                    }
+                    Err(e) => self.game_error = format!("{:?}", e),
+                }
+            }
+            (Msg::Piece(p), Some(Msg::Piece(_))) => {
+                self.selected = Some(Msg::Piece(p)); // we flush the selected piece
             }
         }
+        true // Return true to cause the displayed change to update
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
@@ -157,7 +170,7 @@ impl Component for App {
                     for (0..4).map(|column| {
                             html! {
                             <td>
-                            <button class="button" onclick={ctx.link().callback(move |_| Msg::Select((row, column)))}>
+                            <button class="button" onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
                             { "Not" }
                             </button>
                             </td>
@@ -172,7 +185,7 @@ impl Component for App {
 
                 <p>
                 {
-                    if let Some(pos) = self.selected {
+                    if let Some(pos) = &self.selected {
                         format!("Selected: {:?}", pos)
                     } else {
                         "No selection".to_string()
@@ -184,9 +197,13 @@ impl Component for App {
                 {
                     for self.game.get_pool().iter().map(|piece|
                         html! {
-                            <p>
+
+                            <button class="button" onclick={
+                                let piece = piece.clone().to_owned(); // TODO: what is the right way to do this?
+                                ctx.link().callback(move |_| Msg::Piece(piece.clone()))
+                            }>
                             { format!("{:#?}", piece) }
-                            </p>
+                            </button>
                         }
                     )
                 }
