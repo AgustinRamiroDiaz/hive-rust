@@ -10,6 +10,7 @@ pub(crate) struct Game<'a> {
     won: Option<Color>,
     board: Board<'a>,
     turn_number: u8,
+    pool: Vec<&'a Piece>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -28,12 +29,13 @@ pub(crate) enum GameError {
 // TODO: handle block conditions
 // TODO: handle piece pool
 impl<'a> Game<'a> {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(pool: Vec<&'a Piece>) -> Self {
         Game {
             turn: Color::Black,
             won: None,
             board: Board::new(),
             turn_number: 1,
+            pool,
         }
     }
     pub(crate) fn put(
@@ -246,7 +248,7 @@ impl<'a> Game<'a> {
 
 #[test]
 fn simple_game() {
-    let mut game = Game::new();
+    let mut game = Game::new(Vec::new());
 
     let black_bee = Piece {
         bug: Bug::Bee,
