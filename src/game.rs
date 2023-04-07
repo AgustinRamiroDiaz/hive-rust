@@ -250,6 +250,62 @@ impl<'a> Game<'a> {
             }
         })
     }
+
+    pub(crate) fn get_pool(&self) -> &Vec<&Piece> {
+        &self.pool
+    }
+
+    pub(crate) fn default_pool() -> Vec<Piece> {
+        [Color::Black, Color::White]
+            .iter()
+            .flat_map(|color| {
+                vec![
+                    (
+                        1,
+                        Piece {
+                            bug: Bug::Bee,
+                            color: color.clone(),
+                        },
+                    ),
+                    (
+                        2,
+                        Piece {
+                            bug: Bug::Beetle,
+                            color: color.clone(),
+                        },
+                    ),
+                    (
+                        2,
+                        Piece {
+                            bug: Bug::Spider,
+                            color: color.clone(),
+                        },
+                    ),
+                    (
+                        3,
+                        Piece {
+                            bug: Bug::Ant,
+                            color: color.clone(),
+                        },
+                    ),
+                    (
+                        3,
+                        Piece {
+                            bug: Bug::Grasshopper,
+                            color: color.clone(),
+                        },
+                    ),
+                ]
+            })
+            .flat_map(|(count, piece)| {
+                let mut pieces = vec![];
+                for _ in 0..count {
+                    pieces.push(piece.clone());
+                }
+                pieces
+            })
+            .collect()
+    }
 }
 
 #[test]

@@ -81,7 +81,6 @@ impl Component for App {
                 }
                 </table>
 
-
                 <p>
                 {
                     if let Some(pos) = self.selected {
@@ -91,6 +90,19 @@ impl Component for App {
                     }
                 }
                 </p>
+
+                <div>
+                {
+                    for self.game.get_pool().iter().map(|piece|
+                        html! {
+                            <p>
+                            { format!("{:#?}", piece) }
+                            </p>
+                        }
+                    )
+                }
+                </div>
+
                 <p>
                 {
                     self.game_error.to_string()

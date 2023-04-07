@@ -1,10 +1,10 @@
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub(crate) struct Piece {
     pub(crate) bug: Bug,
     pub(crate) color: Color,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub(crate) enum Bug {
     Bee,
     Beetle,
