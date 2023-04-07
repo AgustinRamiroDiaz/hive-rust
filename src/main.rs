@@ -20,10 +20,99 @@ impl Component for App {
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
-        let pool = vec![&piece::Piece {
-            bug: piece::Bug::Bee,
-            color: piece::Color::Black,
-        }];
+        // TODO: ownership is hard here because the component requires 'static
+        let pool = vec![
+            &piece::Piece {
+                bug: piece::Bug::Bee,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Beetle,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Beetle,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Spider,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Spider,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Ant,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Ant,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Ant,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Grasshopper,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Grasshopper,
+                color: piece::Color::Black,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Grasshopper,
+                color: piece::Color::Black,
+            },
+            // Now the white pieces
+            &piece::Piece {
+                bug: piece::Bug::Bee,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Beetle,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Beetle,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Spider,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Spider,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Ant,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Ant,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Ant,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Grasshopper,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Grasshopper,
+                color: piece::Color::White,
+            },
+            &piece::Piece {
+                bug: piece::Bug::Grasshopper,
+                color: piece::Color::White,
+            },
+        ];
+
         Self {
             selected: None,
             game: game::Game::new(pool),
