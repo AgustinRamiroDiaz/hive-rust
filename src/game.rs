@@ -297,13 +297,7 @@ impl<'a> Game<'a> {
                     ),
                 ]
             })
-            .flat_map(|(count, piece)| {
-                let mut pieces = vec![];
-                for _ in 0..count {
-                    pieces.push(piece.clone());
-                }
-                pieces
-            })
+            .flat_map(|(count, piece)| (0..count).map(move |_| piece.clone()))
             .collect()
     }
 }
