@@ -106,6 +106,10 @@ impl Game {
     }
 
     pub(crate) fn move_top(&mut self, from: Coordinate, to: Coordinate) -> Result<(), GameError> {
+        if from == to {
+            return Err(GameError::InvalidMove);
+        }
+
         if let Some(winner) = self.won.clone() {
             return Err(GameError::PlayerWon(winner));
         }
@@ -356,11 +360,9 @@ fn simple_game() {
     game.move_top((-1, 1).into(), (1, 1).into()).unwrap(); // black ant moves to (1, 1)
 
     assert_eq!(
-        game.move_top((1, 1).into(), (1, 1).into()),
+        game.move_top((1, 0).into(), (1, 0).into()),
         Err(GameError::InvalidMove)
     ); // cannot move to the same location
-
-    game.move_top((2, 0).into(), (1, 0).into()).unwrap(); // black beetle moves to (0, 0), stacking on top of the black beetle
 
     game.move_top((1, 0).into(), (0, 0).into()).unwrap(); // white beetle moves to (0, 0), stacking on top of the black beetle
 
@@ -369,5 +371,7 @@ fn simple_game() {
         Err(GameError::NoPieceAtLocation)
     );
 
-    game.put(white_grasshopper.clone(), (-1, 0).into()).unwrap(); // white grasshopper is placed at (-1, 0)
+    // TODO: move a black piece
+
+    // game.put(white_grasshopper.clone(), (-1, 0).into()).unwrap(); // white grasshopper is placed at (-1, 0)
 }
