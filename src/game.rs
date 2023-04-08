@@ -157,7 +157,7 @@ impl Game {
 
                 let hive = self.board.hive_without(from);
 
-                let neighbor_coordinates = Board::neighbor_coordinates(from);
+                let neighbor_coordinates = Board::neighbor_coordinates(from).into();
                 let slidable_neighbors = walkable
                     .intersection(&neighbor_coordinates)
                     .filter(|&c| Board::can_slide(from, *c, &hive));
@@ -199,7 +199,7 @@ impl Game {
                     for path in paths {
                         let last = *path.last().ok_or(())?; // TODO: this should never fail
 
-                        let neighbor_coordinates = Board::neighbor_coordinates(last);
+                        let neighbor_coordinates = Board::neighbor_coordinates(last).into();
                         let walkable_neighbors = walkable.intersection(&neighbor_coordinates);
                         let slidable_neighbors = walkable_neighbors
                             .filter(|&c| !path.contains(c))
@@ -225,10 +225,10 @@ impl Game {
                 let mut to_check = vec![from];
 
                 while let Some(current) = to_check.pop() {
-                    let neighbor_coordinates = Board::neighbor_coordinates(current);
+                    let neighbor_coordinates = Board::neighbor_coordinates(current).into();
                     let slidable_neighbors = walkable
                         .intersection(&neighbor_coordinates)
-                        .filter(|&c| Board::can_slide(current, *c, &walkable));
+                        .filter(|&&c| Board::can_slide(current, c, &self.board.hive()));
 
                     for &neighbor in slidable_neighbors {
                         if neighbor == to {

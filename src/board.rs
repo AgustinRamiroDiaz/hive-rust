@@ -115,11 +115,8 @@ impl Board {
             .collect()
     }
 
-    pub(crate) fn neighbor_coordinates(from: Coordinate) -> HashSet<Coordinate> {
-        RELATIVE_NEIGHBORS_CLOCKWISE
-            .into_iter()
-            .map(move |delta| from + delta)
-            .collect()
+    pub(crate) fn neighbor_coordinates(from: Coordinate) -> [Coordinate; 6] {
+        RELATIVE_NEIGHBORS_CLOCKWISE.map(|delta| from + delta)
     }
 
     pub(crate) fn is_neighboor(a: Coordinate, b: Coordinate) -> bool {
@@ -181,7 +178,7 @@ impl Board {
 
         let left_neighbor = hive.get(&(from + relative_left_neighbor));
 
-        return left_neighbor.is_some() && right_neighbor.is_some();
+        return left_neighbor.is_none() || right_neighbor.is_none();
     }
 
     pub(crate) fn find<F>(&self, filter: F) -> Vec<Coordinate>
