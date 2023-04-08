@@ -5,12 +5,12 @@ use std::vec;
 use crate::board::{self, Board, Coordinate};
 use crate::piece::{Bug, Color, Piece};
 
-pub(crate) struct Game<'a> {
+pub(crate) struct Game {
     turn: Color,
     won: Option<Color>,
-    board: Board<'a>,
+    board: Board,
     turn_number: u8,
-    pool: Vec<&'a Piece>,
+    pool: Vec<Piece>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -28,8 +28,8 @@ pub(crate) enum GameError {
 }
 
 // TODO: handle block conditions
-impl<'a> Game<'a> {
-    pub(crate) fn new(pool: Vec<&'a Piece>) -> Self {
+impl Game {
+    pub(crate) fn new(pool: Vec<Piece>) -> Self {
         Game {
             turn: Color::Black,
             won: None,
@@ -38,11 +38,7 @@ impl<'a> Game<'a> {
             pool,
         }
     }
-    pub(crate) fn put(
-        &mut self,
-        piece: &'a Piece,
-        coordinate: Coordinate,
-    ) -> Result<(), GameError> {
+    pub(crate) fn put(&mut self, piece: Piece, coordinate: Coordinate) -> Result<(), GameError> {
         if let Some(winner) = self.won.clone() {
             return Err(GameError::PlayerWon(winner));
         }
@@ -80,7 +76,7 @@ impl<'a> Game<'a> {
             return Err(GameError::QueenMustBePlacedBeforeFifthTurn);
         }
 
-        if let Some(index) = self.pool.iter().position(|&p| p == piece) {
+        if let Some(index) = self.pool.iter().position(|p| p == &piece) {
             self.pool.swap_remove(index);
         } else {
             return Err(GameError::PieceNotInPool);
@@ -251,7 +247,7 @@ impl<'a> Game<'a> {
         })
     }
 
-    pub(crate) fn get_pool(&self) -> &Vec<&Piece> {
+    pub(crate) fn get_pool(&self) -> &Vec<Piece> {
         &self.pool
     }
 
@@ -304,7 +300,7 @@ impl<'a> Game<'a> {
 
 #[test]
 fn simple_game() {
-    let mut game = Game::new(Vec::new());
+    let mut game = Game::new(Game::default_pool());
 
     let black_bee = Piece {
         bug: Bug::Bee,
@@ -331,29 +327,29 @@ fn simple_game() {
         color: Color::White,
     };
 
-    game.put(&black_bee, (0, 0).into()).unwrap(); // black bee is placed at (0, 0)
+    game.put(black_bee.clone(), (0, 0).into()).unwrap(); // black bee is placed at (0, 0)
 
     assert_eq!(
-        game.put(&black_bee, (0, 0).into()),
+        game.put(black_bee.clone(), (0, 0).into()),
         Err(GameError::NotYourTurn)
     ); // it's not black's turn
 
-    game.put(&white_bee, (1, 0).into()).unwrap(); // white bee is placed at (1, 0)
+    game.put(white_bee.clone(), (1, 0).into()).unwrap(); // white bee is placed at (1, 0)
 
     assert_eq!(
-        game.put(&black_beetle, (2, 0).into()),
+        game.put(black_beetle.clone(), (2, 0).into()),
         Err(GameError::SpawnedInOpponentsHive)
     ); // black beetle cannot spawn in white's hive
 
     assert_eq!(
-        game.put(&black_beetle, (0, 0).into()),
+        game.put(black_beetle.clone(), (0, 0).into()),
         Err(GameError::SpawnedOnTopOfAnotherPiece)
     ); // pieces cannot spawn on top of another piece
 
-    game.put(&black_beetle, (-1, 0).into()).unwrap(); // black beetle is placed at (-1, 0)
+    game.put(black_beetle.clone(), (-1, 0).into()).unwrap(); // black beetle is placed at (-1, 0)
 
-    game.put(&white_beetle, (2, 0).into()).unwrap(); // white beetle is placed at (2, 0)
-    game.put(&black_ant, (-1, 1).into()).unwrap(); // black ant is placed at (-1, 1)
+    game.put(white_beetle.clone(), (2, 0).into()).unwrap(); // white beetle is placed at (2, 0)
+    game.put(black_ant.clone(), (-1, 1).into()).unwrap(); // black ant is placed at (-1, 1)
 
     game.move_top((2, 0).into(), (1, 0).into()).unwrap(); // white beetle moves to (1, 0), stacking on top of the white bee
 
@@ -373,5 +369,5 @@ fn simple_game() {
         Err(GameError::NoPieceAtLocation)
     );
 
-    game.put(&white_grasshopper, (-1, 0).into()).unwrap(); // white grasshopper is placed at (-1, 0)
+    game.put(white_grasshopper.clone(), (-1, 0).into()).unwrap(); // white grasshopper is placed at (-1, 0)
 }

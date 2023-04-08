@@ -48,14 +48,14 @@ impl std::ops::Sub for Coordinate {
     }
 }
 
-pub(crate) struct Board<'a> {
+pub(crate) struct Board {
     // TODO: Can we make cells private? could it be an implementation detail?
-    pub(crate) cells: HashMap<Coordinate, Cell<'a>>,
+    pub(crate) cells: HashMap<Coordinate, Cell>,
 }
 
-type Cell<'a> = Vec<&'a piece::Piece>;
+type Cell = Vec<piece::Piece>;
 
-impl<'a> Board<'a> {
+impl Board {
     pub(crate) fn new() -> Self {
         let x = (1, 2);
         Board {
@@ -68,10 +68,10 @@ impl<'a> Board<'a> {
     }
 
     pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&piece::Piece> {
-        self.get_cell(coordinate)?.last().copied()
+        self.get_cell(coordinate)?.last()
     }
 
-    pub(crate) fn put_piece(&mut self, p: &'a piece::Piece, coordinate: Coordinate) {
+    pub(crate) fn put_piece(&mut self, p: piece::Piece, coordinate: Coordinate) {
         match self.cells.get_mut(&coordinate) {
             None => {
                 let cell = vec![p];
@@ -191,7 +191,7 @@ impl<'a> Board<'a> {
         self.cells
             .iter()
             .flat_map(|(&c, cell)| Some((c, cell.last()?)))
-            .filter(|(c, &p)| filter(p))
+            .filter(|(c, p)| filter(p))
             .map(|(c, _)| c)
             .collect()
     }
@@ -223,11 +223,11 @@ fn simple_board() {
         color: Black,
     };
 
-    board.put_piece(&black_bee, Coordinate { x: 0, y: 0 });
-    board.put_piece(&white_bee, Coordinate { x: 0, y: 1 });
-    board.put_piece(&black_beetle, Coordinate { x: 0, y: 1 });
-    board.put_piece(&white_beetle, Coordinate { x: 0, y: 1 });
-    board.put_piece(&black_ant, Coordinate { x: 0, y: -1 });
+    board.put_piece(black_bee.clone(), Coordinate { x: 0, y: 0 });
+    board.put_piece(white_bee.clone(), Coordinate { x: 0, y: 1 });
+    board.put_piece(black_beetle.clone(), Coordinate { x: 0, y: 1 });
+    board.put_piece(white_beetle.clone(), Coordinate { x: 0, y: 1 });
+    board.put_piece(black_ant.clone(), Coordinate { x: 0, y: -1 });
     board
         .move_top_piece(Coordinate { x: 0, y: -1 }, Coordinate { x: 1, y: 1 })
         .unwrap();
@@ -237,15 +237,15 @@ fn simple_board() {
 
     assert_eq!(
         board.get_cell(Coordinate { x: 0, y: 0 }),
-        Some(&vec![&black_bee, &white_beetle])
+        Some(&vec![black_bee, white_beetle])
     );
     assert_eq!(
         board.get_cell(Coordinate { x: 0, y: 1 }),
-        Some(&vec![&white_bee, &black_beetle])
+        Some(&vec![white_bee, black_beetle])
     );
     assert_eq!(
         board.get_cell(Coordinate { x: 1, y: 1 }),
-        Some(&vec![&black_ant])
+        Some(&vec![black_ant])
     );
     assert_eq!(board.get_cell((10, 1).into()), None);
 
