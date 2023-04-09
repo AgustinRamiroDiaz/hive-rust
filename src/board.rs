@@ -57,7 +57,6 @@ type Cell = Vec<piece::Piece>;
 
 impl Board {
     pub(crate) fn new() -> Self {
-        let x = (1, 2);
         Board {
             cells: HashMap::new(),
         }

@@ -32,16 +32,12 @@ impl Component for App {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         self.game_error = "".to_string();
         match (msg, self.selected.clone()) {
-            (Msg::Coordinate(pos), Some(Msg::Piece(p))) => {
-                todo!();
-
-                match self.game.put(p, pos.into()) {
-                    Ok(_) => {
-                        self.selected = None;
-                    }
-                    Err(e) => self.game_error = format!("{:?}", e),
+            (Msg::Coordinate(pos), Some(Msg::Piece(p))) => match self.game.put(p, pos.into()) {
+                Ok(_) => {
+                    self.selected = None;
                 }
-            }
+                Err(e) => self.game_error = format!("{:?}", e),
+            },
             (s, None) => {
                 self.selected = Some(s);
             }
@@ -49,17 +45,23 @@ impl Component for App {
                 self.selected = Some(Msg::Piece(p)); // we flush the selected position
             }
             (Msg::Coordinate(to), Some(Msg::Coordinate(from))) => {
-                todo!();
-
-                match self.game.move_top(from.into(), to.into()) {
-                    Ok(_) => {
-                        self.selected = None;
+                if from == to {
+                    self.selected = None;
+                } else {
+                    match self.game.move_top(from.into(), to.into()) {
+                        Ok(_) => {
+                            self.selected = None;
+                        }
+                        Err(e) => self.game_error = format!("{:?}", e),
                     }
-                    Err(e) => self.game_error = format!("{:?}", e),
                 }
             }
-            (Msg::Piece(p), Some(Msg::Piece(_))) => {
-                self.selected = Some(Msg::Piece(p)); // we flush the selected piece
+            (Msg::Piece(p), Some(Msg::Piece(old))) => {
+                if old == p {
+                    self.selected = None;
+                } else {
+                    self.selected = Some(Msg::Piece(p)); // we flush the selected piece
+                }
             }
         }
         true // Return true to cause the displayed change to update
@@ -78,7 +80,9 @@ impl Component for App {
                             html! {
                             <td>
                             <button class="button" onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
-                            { "Not" }
+                            {
+                                self.game.get_top_piece((row, column).into()).map(|p| format!("{}", p)).unwrap_or("".to_string())
+                            }
                             </button>
                             </td>
                             }
@@ -106,10 +110,10 @@ impl Component for App {
                         html! {
 
                             <button class="button" onclick={
-                                let piece = piece.clone().to_owned(); // TODO: what is the right way to do this?
+                                let piece = piece.clone(); // TODO: what is the right way to do this?
                                 ctx.link().callback(move |_| Msg::Piece(piece.clone()))
                             }>
-                            { format!("{:#?}", piece) }
+                            { format!("{}", piece) }
                             </button>
                         }
                     )

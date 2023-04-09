@@ -300,6 +300,10 @@ impl Game {
             .flat_map(|(count, piece)| (0..count).map(move |_| piece.clone()))
             .collect()
     }
+
+    pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&Piece> {
+        self.board.get_top_piece(coordinate)
+    }
 }
 
 #[test]
