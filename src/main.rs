@@ -68,32 +68,35 @@ impl Component for App {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
+        let board = html! {
+            <table>
+            { for (-5..5).map(|row| {
+                html! {
+                <tr>
+                { for (-5..5).map(|column| {
+                        html! {
+                        <td>
+                        <button onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
+                        {
+                            self.game.get_top_piece((row, column).into()).map(|p| format!("{p}\n({row},{column})")).unwrap_or(format!("({row},{column})"))
+                        }
+                        </button>
+                        </td>
+                        }
+                })}
+                </tr>
+            }})}
+            </table>
+        };
+
+        let pool = self.game.get_pool();
+        let whites = pool.iter().filter(|p| p.color == piece::Color::White);
+        let blacks = pool.iter().filter(|p| p.color == piece::Color::Black);
+
         html! {
             <div>
-                <table>
-                {
-                for (0..4).map(|row| {
-                    html! {
-                    <tr>
-                    {
-                    for (0..4).map(|column| {
-                            html! {
-                            <td>
-                            <button class="button" onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
-                            {
-                                self.game.get_top_piece((row, column).into()).map(|p| format!("{}", p)).unwrap_or("".to_string())
-                            }
-                            </button>
-                            </td>
-                            }
-                    })
-                    }
-                    </tr>
-                    }
-                })
-                }
-                </table>
 
+                {board}
                 <p>
                 {
                     if let Some(pos) = &self.selected {
@@ -104,21 +107,30 @@ impl Component for App {
                 }
                 </p>
 
-                <div>
-                {
-                    for self.game.get_pool().iter().map(|piece|
-                        html! {
-
-                            <button class="button" onclick={
-                                let piece = piece.clone(); // TODO: what is the right way to do this?
-                                ctx.link().callback(move |_| Msg::Piece(piece.clone()))
-                            }>
-                            { format!("{}", piece) }
-                            </button>
+            <table>
+            {
+                for blacks.zip(whites).map(
+                    |(black, white)| html!{
+                        <tr>
+                        {
+                            for [black, white].map(|piece|{
+                                html!{
+                                    <td>
+                                    <button class="button" onclick={
+                                        let piece = piece.clone(); // TODO: what is the right way to do this?
+                                        ctx.link().callback(move |_| Msg::Piece(piece.clone()))
+                                    }>
+                                    { format!("{}", piece) }
+                                    </button>
+                                    </td>
+                                }
+                            })
                         }
-                    )
-                }
-                </div>
+                        </tr>
+                    }
+                )
+            }
+            </table>
 
                 <p>
                 {
