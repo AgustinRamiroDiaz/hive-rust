@@ -68,25 +68,41 @@ impl Component for App {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
+        let mut cantidad_de_sangria = 0;
+
         let board = html! {
-            <table>
+            <div>
             { for (-5..5).map(|row| {
                 html! {
-                <tr>
+
+            if row % 2 == 0 {
+                <div class="sangria">
                 { for (-5..5).map(|column| {
                         html! {
-                        <td>
-                        <button onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
+                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
                         {
                             self.game.get_top_piece((row, column).into()).map(|p| format!("{p}\n({row},{column})")).unwrap_or(format!("({row},{column})"))
                         }
                         </button>
-                        </td>
                         }
                 })}
-                </tr>
+                </div>
+            } else {
+                <div>
+                { for (-5..5).map(|column| {
+                        html! {
+                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
+                        {
+                            self.game.get_top_piece((row, column).into()).map(|p| format!("{p}\n({row},{column})")).unwrap_or(format!("({row},{column})"))
+                        }
+                        </button>
+                        }
+                })}
+                </div>
+            }
+
             }})}
-            </table>
+            </div>
         };
 
         let pool = self.game.get_pool();
