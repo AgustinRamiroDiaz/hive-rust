@@ -72,11 +72,10 @@ impl Component for App {
 
         let board = html! {
             <div>
-            { for (-5..5).map(|row| {
+            { for (-5..5).step_by(2).map(|row| {
                 html! {
-
-            if row % 2 == 0 {
-                <div class="sangria">
+                <div class="move">
+                <div class="sangria move-vertically">
                 { for (-5..5).map(|column| {
                         html! {
                         <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
@@ -87,20 +86,19 @@ impl Component for App {
                         }
                 })}
                 </div>
-            } else {
+
                 <div>
                 { for (-5..5).map(|column| {
                         html! {
-                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
+                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((row + 1, column)))}>
                         {
-                            self.game.get_top_piece((row, column).into()).map(|p| format!("{p}\n({row},{column})")).unwrap_or(format!("({row},{column})"))
+                            self.game.get_top_piece((row + 1, column).into()).map(|p| format!("{p}\n({},{column})", row +1)).unwrap_or(format!("({},{column})", row + 1))
                         }
                         </button>
                         }
                 })}
                 </div>
-            }
-
+                </div>
             }})}
             </div>
         };
