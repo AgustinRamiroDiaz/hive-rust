@@ -170,7 +170,6 @@ impl Game {
             }
             Bug::Beetle => self.board.hive_and_walkable_without(from).contains(&to),
             Bug::Grasshopper => {
-                let walkable = self.board.walkable_without(from);
                 let hive = self.board.hive_without(from);
 
                 let possible_destinies =
@@ -179,7 +178,7 @@ impl Game {
                         .flat_map(|&direction| {
                             let position = from + direction;
 
-                            if !walkable.contains(&position) {
+                            if !hive.contains(&position) {
                                 return None;
                             }
 
