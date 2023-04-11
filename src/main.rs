@@ -68,12 +68,12 @@ impl Component for App {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let from_row = -5;
-        let to_row = 5;
+        // TODO: there's a weird thing happening when from_row is odd
+        let from_row = -6;
+        let to_row = 4;
         let from_column = -5;
         let to_column = 5;
 
-        // TODO: there's a weird thing happening at 0,0
         let board = html! {
             <div>
             { for (from_row..to_row).step_by(2).map(|row| {
