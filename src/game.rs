@@ -140,11 +140,20 @@ impl Game {
             .or_else(|_| Err(GameError::NoPieceAtLocation))?;
 
         let hive = self.board.hive();
-        if hive
-            .iter()
-            .any(|&c| self.board.neighbor_pieces(c).len() == 0)
-        // TODO: this logic has some edge cases that are not covered
-        {
+
+        // TODO: could this be done more efficiently?
+        let mut reachable = HashSet::new();
+        let mut to_visit = vec![to];
+        while let Some(coordinate) = to_visit.pop() {
+            reachable.insert(coordinate);
+            for neighbor in Board::neighbor_coordinates(coordinate) {
+                if !reachable.contains(&neighbor) && hive.contains(&neighbor) {
+                    to_visit.push(neighbor);
+                }
+            }
+        }
+
+        if hive != reachable {
             self.board.move_top_piece(to, from).unwrap(); // TODO: remove unwrap
             return Err(GameError::HiveDisconnected);
         }
