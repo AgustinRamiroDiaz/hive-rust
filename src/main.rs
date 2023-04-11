@@ -129,7 +129,7 @@ impl Component for App {
 
             <table>
             {
-                for blacks.zip(whites).map(
+                for blacks.zip(whites).map( // TODO: this has a problem: we'll see only the first n whites being n = len(blacks)
                     |(black, white)| html!{
                         <tr>
                         {
