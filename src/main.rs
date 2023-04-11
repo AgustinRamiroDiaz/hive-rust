@@ -68,20 +68,19 @@ impl Component for App {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let mut cantidad_de_sangria = 0;
-
         let from_row = -5;
         let to_row = 5;
         let from_column = -5;
         let to_column = 5;
 
+        // TODO: there's a weird thing happening at 0,0
         let board = html! {
             <div>
             { for (from_row..to_row).step_by(2).map(|row| {
                 html! {
                 <div class="move">
                 <div class="sangria move-vertically">
-                { for (from_column..to_column).map(|column| {
+                { for ((from_column - row / 2 + 1)..to_column).map(|column| {
                         html! {
                         <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((column, row)))}>
                         {
@@ -93,7 +92,7 @@ impl Component for App {
                 </div>
 
                 <div>
-                { for (from_column..to_column).map(|column| {
+                { for ((from_column - row / 2)..to_column).map(|column| {
                         let row = row + 1;
 
                         html! {
