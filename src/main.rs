@@ -38,8 +38,15 @@ impl Component for App {
                 }
                 Err(e) => self.game_error = format!("{:?}", e),
             },
-            (s, None) => {
-                self.selected = Some(s);
+            (Msg::Piece(p), None) => {
+                self.selected = Some(Msg::Piece(p));
+            }
+            (Msg::Coordinate(from), None) => {
+                if self.game.get_top_piece(from.into()).is_some() {
+                    self.selected = Some(Msg::Coordinate(from));
+                } else {
+                    self.game_error = "No piece selected".to_string();
+                }
             }
             (Msg::Piece(p), Some(Msg::Coordinate(pos))) => {
                 self.selected = Some(Msg::Piece(p)); // we flush the selected position

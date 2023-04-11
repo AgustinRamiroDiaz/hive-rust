@@ -143,6 +143,7 @@ impl Game {
         if hive
             .iter()
             .any(|&c| self.board.neighbor_pieces(c).len() == 0)
+        // TODO: this logic has some edge cases that are not covered
         {
             self.board.move_top_piece(to, from).unwrap(); // TODO: remove unwrap
             return Err(GameError::HiveDisconnected);
