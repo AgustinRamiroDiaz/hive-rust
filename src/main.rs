@@ -70,17 +70,22 @@ impl Component for App {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let mut cantidad_de_sangria = 0;
 
+        let from_row = -5;
+        let to_row = 5;
+        let from_column = -5;
+        let to_column = 5;
+
         let board = html! {
             <div>
-            { for (-5..5).step_by(2).map(|row| {
+            { for (from_row..to_row).step_by(2).map(|row| {
                 html! {
                 <div class="move">
                 <div class="sangria move-vertically">
-                { for (-5..5).map(|column| {
+                { for (from_column..to_column).map(|column| {
                         html! {
-                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((row, column)))}>
+                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((column, row)))}>
                         {
-                            self.game.get_top_piece((row, column).into()).map(|p| format!("{p}\n({row},{column})")).unwrap_or(format!("({row},{column})"))
+                            self.game.get_top_piece((column, row).into()).map(|p| format!("{p}\n({column},{row})")).unwrap_or(format!("({column},{row})"))
                         }
                         </button>
                         }
@@ -88,11 +93,13 @@ impl Component for App {
                 </div>
 
                 <div>
-                { for (-5..5).map(|column| {
+                { for (from_column..to_column).map(|column| {
+                        let row = row + 1;
+
                         html! {
-                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((row + 1, column)))}>
+                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((column, row)))}>
                         {
-                            self.game.get_top_piece((row + 1, column).into()).map(|p| format!("{p}\n({},{column})", row +1)).unwrap_or(format!("({},{column})", row + 1))
+                            self.game.get_top_piece((column, row).into()).map(|p| format!("{p}\n({column},{row})")).unwrap_or(format!("({column},{row})"))
                         }
                         </button>
                         }
