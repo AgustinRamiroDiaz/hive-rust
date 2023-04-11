@@ -127,30 +127,43 @@ impl Component for App {
                 }
                 </p>
 
-            <table>
-            {
-                for blacks.zip(whites).map( // TODO: this has a problem: we'll see only the first n whites being n = len(blacks)
-                    |(black, white)| html!{
-                        <tr>
-                        {
-                            for [black, white].map(|piece|{
-                                html!{
-                                    <td>
-                                    <button class="button" onclick={
-                                        let piece = piece.clone(); // TODO: what is the right way to do this?
-                                        ctx.link().callback(move |_| Msg::Piece(piece.clone()))
-                                    }>
-                                    { format!("{}", piece) }
-                                    </button>
-                                    </td>
-                                }
-                            })
-                        }
-                        </tr>
-                    }
-                )
-            }
-            </table>
+            <div class="container">
+                <div class="row">
+
+                <div class="col">
+                {
+                    for blacks.map(|piece|{
+                            html!{
+                                <button class="button" onclick={
+                                    let piece = piece.clone(); // TODO: what is the right way to do this?
+                                    ctx.link().callback(move |_| Msg::Piece(piece.clone()))
+                                }>
+                                { format!("{}", piece) }
+                                </button>
+                            }
+                        })
+                }
+                </div>
+
+
+                <div class="col">
+                {
+                    for whites.map(|piece|{
+                            html!{
+                                <button class="button" onclick={
+                                    let piece = piece.clone(); // TODO: what is the right way to do this?
+                                    ctx.link().callback(move |_| Msg::Piece(piece.clone()))
+                                }>
+                                { format!("{}", piece) }
+                                </button>
+                            }
+                        })
+                }
+                </div>
+
+
+                </div>
+            </div>
 
                 <p>
                 {
