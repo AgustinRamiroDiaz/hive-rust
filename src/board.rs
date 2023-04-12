@@ -16,8 +16,8 @@ pub(crate) const RELATIVE_NEIGHBORS_CLOCKWISE: [Coordinate; 6] = [
 
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub(crate) struct Coordinate {
-    x: i8,
-    y: i8,
+    pub(crate) x: i8,
+    pub(crate) y: i8,
 }
 
 impl From<(i8, i8)> for Coordinate {

@@ -313,6 +313,10 @@ impl Game {
     pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&Piece> {
         self.board.get_top_piece(coordinate)
     }
+
+    pub(crate) fn hive(&self) -> HashSet<Coordinate> {
+        self.board.hive()
+    }
 }
 
 #[test]

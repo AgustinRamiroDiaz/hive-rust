@@ -4,6 +4,8 @@ mod piece;
 
 use yew::prelude::*;
 use yew::{html, Component, Context, Html};
+
+use crate::board::Coordinate;
 // Define the possible messages which can be sent to the component
 #[derive(Debug, Clone)]
 enum Msg {
@@ -32,12 +34,13 @@ impl Component for App {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         self.game_error = "".to_string();
         match (msg, self.selected.clone()) {
-            (Msg::Coordinate(pos), Some(Msg::Piece(p))) => match self.game.put(p, pos.into()) {
-                Ok(_) => {
-                    self.selected = None;
+            (Msg::Coordinate(pos), Some(Msg::Piece(p))) => {
+                match self.game.put(p, pos.into()) {
+                    Ok(_) => {}
+                    Err(e) => self.game_error = format!("{:?}", e),
                 }
-                Err(e) => self.game_error = format!("{:?}", e),
-            },
+                self.selected = None;
+            }
             (Msg::Piece(p), None) => {
                 self.selected = Some(Msg::Piece(p));
             }
@@ -56,11 +59,10 @@ impl Component for App {
                     self.selected = None;
                 } else {
                     match self.game.move_top(from.into(), to.into()) {
-                        Ok(_) => {
-                            self.selected = None;
-                        }
+                        Ok(_) => {}
                         Err(e) => self.game_error = format!("{:?}", e),
                     }
+                    self.selected = None;
                 }
             }
             (Msg::Piece(p), Some(Msg::Piece(old))) => {
@@ -76,14 +78,44 @@ impl Component for App {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         // TODO: there's a weird thing happening when from_row is odd
-        let from_row = -6;
-        let to_row = 4;
-        let from_column = -5;
-        let to_column = 5;
+
+        let from_row = self
+            .game
+            .hive()
+            .iter()
+            .map(|Coordinate { x: _, y }| *y)
+            .min()
+            .unwrap_or(0);
+
+        let to_row = self
+            .game
+            .hive()
+            .iter()
+            .map(|Coordinate { x: _, y }| *y)
+            .max()
+            .unwrap_or(0);
+
+        let from_column = self
+            .game
+            .hive()
+            .iter()
+            .map(|Coordinate { x, y: _ }| *x)
+            .min()
+            .unwrap_or(0)
+            - 2;
+
+        let to_column = self
+            .game
+            .hive()
+            .iter()
+            .map(|Coordinate { x, y: _ }| *x)
+            .max()
+            .unwrap_or(0)
+            + 2;
 
         let board = html! {
             <div>
-            { for (from_row..to_row).step_by(2).map(|row| {
+            { for ((from_row/2)*2-2..to_row+2).step_by(2).map(|row| {
                 html! {
                 <div class="move">
                 <div class="sangria move-vertically">
