@@ -51,7 +51,7 @@ impl Component for App {
                     self.game_error = "No piece selected".to_string();
                 }
             }
-            (Msg::Piece(p), Some(Msg::Coordinate(pos))) => {
+            (Msg::Piece(p), Some(Msg::Coordinate(_))) => {
                 self.selected = Some(Msg::Piece(p)); // we flush the selected position
             }
             (Msg::Coordinate(to), Some(Msg::Coordinate(from))) => {

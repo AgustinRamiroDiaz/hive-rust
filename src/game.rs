@@ -63,12 +63,12 @@ impl Game {
 
         // TODO: test this
         // TODO: remove the knowledge of the internal board cells
-        let colored_queen_is_not_placed = self
+        let colored_queen_is_not_placed = !self
             .board
             .cells
             .values()
             .flatten()
-            .any(|p| p.bug != Bug::Bee && p.color == self.turn);
+            .any(|p| p.bug == Bug::Bee && p.color == self.turn);
 
         let is_fourth_turn = self.turn_number == 7 || self.turn_number == 8;
 
