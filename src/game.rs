@@ -105,6 +105,7 @@ impl Game {
         self.turn_number += 1;
     }
 
+    // TODO: move_top is not handling the bee placement condition
     pub(crate) fn move_top(&mut self, from: Coordinate, to: Coordinate) -> Result<(), GameError> {
         if from == to {
             return Err(GameError::InvalidMove);
@@ -163,6 +164,10 @@ impl Game {
     }
 
     fn can_move(&self, from: Coordinate, to: Coordinate) -> Result<bool, ()> {
+        Ok(self.possible_moves(from)?.contains(&to))
+    }
+
+    pub(crate) fn possible_moves(&self, from: Coordinate) -> Result<HashSet<Coordinate>, ()> {
         let piece = self.board.get_top_piece(from).ok_or(())?;
 
         Ok(match piece.bug {
@@ -176,9 +181,9 @@ impl Game {
                     .intersection(&neighbor_coordinates)
                     .filter(|&c| Board::can_slide(from, *c, &hive));
 
-                slidable_neighbors.into_iter().any(|&c| c == to)
+                slidable_neighbors.cloned().collect()
             }
-            Bug::Beetle => self.board.hive_and_walkable_without(from).contains(&to),
+            Bug::Beetle => self.board.hive_and_walkable_neighbors_without(from),
             Bug::Grasshopper => {
                 let hive = self.board.hive_without(from);
 
@@ -199,7 +204,7 @@ impl Game {
                             Some(last)
                         });
 
-                possible_destinies.into_iter().any(|c| c == to)
+                possible_destinies.collect()
             }
             Bug::Spider => {
                 let walkable = self.board.walkable_without(from);
@@ -228,13 +233,13 @@ impl Game {
                     paths = new_paths;
                 }
 
-                paths.iter().flat_map(|p| p.last()).any(|&c| c == to)
+                paths.iter().flat_map(|p| p.last()).cloned().collect()
             }
             Bug::Ant => {
                 let walkable = self.board.walkable_without(from);
 
                 // Traverse the tree
-                let mut checked: HashSet<Coordinate> = HashSet::new();
+                let mut reachable: HashSet<Coordinate> = HashSet::new();
                 let mut to_check = vec![from];
 
                 while let Some(current) = to_check.pop() {
@@ -244,18 +249,15 @@ impl Game {
                         .filter(|&&c| Board::can_slide(current, c, &self.board.hive()));
 
                     for &neighbor in slidable_neighbors {
-                        if neighbor == to {
-                            return Ok(true);
-                        }
-
-                        if !checked.contains(&neighbor) {
+                        if !reachable.contains(&neighbor) {
                             to_check.push(neighbor);
                         }
                     }
 
-                    checked.insert(current);
+                    reachable.insert(current);
                 }
-                false
+
+                reachable
             }
         })
     }

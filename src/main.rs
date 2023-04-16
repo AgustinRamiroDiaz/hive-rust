@@ -2,6 +2,8 @@ mod board;
 mod game;
 mod piece;
 
+use std::collections::HashSet;
+
 use yew::prelude::*;
 use yew::{html, Component, Context, Html};
 
@@ -15,6 +17,7 @@ enum Msg {
 
 struct App {
     selected: Option<Msg>,
+    possible_moves: HashSet<Coordinate>,
     game: game::Game,
     game_error: String,
 }
@@ -28,12 +31,16 @@ impl Component for App {
             selected: None,
             game: game::Game::new(game::Game::default_pool()),
             game_error: "".to_string(),
+            possible_moves: HashSet::new(),
         }
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         self.game_error = "".to_string();
-        match (msg, self.selected.clone()) {
+
+        let selected_clone = self.selected.clone();
+
+        match (msg.clone(), self.selected.clone()) {
             (Msg::Coordinate(pos), Some(Msg::Piece(p))) => {
                 match self.game.put(p, pos.into()) {
                     Ok(_) => {}
@@ -73,6 +80,19 @@ impl Component for App {
                 }
             }
         }
+
+        match (msg.clone(), selected_clone) {
+            (Msg::Coordinate(from), None) => match self.game.possible_moves(from.into()) {
+                Ok(moves) => {
+                    self.possible_moves = moves;
+                }
+                Err(e) => {}
+            },
+            _ => {
+                self.possible_moves = HashSet::new();
+            }
+        }
+
         true // Return true to cause the displayed change to update
     }
 
@@ -115,27 +135,13 @@ impl Component for App {
 
         let board = html! {
             <div>
-            { for ((from_row/2)*2-2..to_row+2).step_by(2).map(|row| {
+            { for ((from_row/2)*2-2..to_row+2).map(|row| {
                 html! {
                 <div class="move">
-                <div class="sangria move-vertically">
-                { for ((from_column - row / 2 + 1)..to_column).map(|column| {
+                <div class={if row % 2 != 0 {"sangria"} else {""}}>
+                { for ((from_column - (row as f64 / 2.0).floor() as i8)..to_column).map(|column| {
                         html! {
-                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((column, row)))}>
-                        {
-                            self.game.get_top_piece((column, row).into()).map(|p| format!("{p}\n({column},{row})")).unwrap_or(format!("({column},{row})"))
-                        }
-                        </button>
-                        }
-                })}
-                </div>
-
-                <div>
-                { for ((from_column - row / 2)..to_column).map(|column| {
-                        let row = row + 1;
-
-                        html! {
-                        <button class="tile hex" onclick={ctx.link().callback(move |_| Msg::Coordinate((column, row)))}>
+                        <button class={format!("tile hex {}", if self.possible_moves.contains(&(column, row).into()) {"possible-move"} else {""})} onclick={ctx.link().callback(move |_| Msg::Coordinate((column, row)))}>
                         {
                             self.game.get_top_piece((column, row).into()).map(|p| format!("{p}\n({column},{row})")).unwrap_or(format!("({column},{row})"))
                         }
