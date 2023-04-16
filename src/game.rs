@@ -346,10 +346,6 @@ fn simple_game() {
         bug: Bug::Ant,
         color: Color::Black,
     };
-    let white_grasshopper = Piece {
-        bug: Bug::Grasshopper,
-        color: Color::White,
-    };
 
     game.put(black_bee.clone(), (0, 0).into()).unwrap(); // black bee is placed at (0, 0)
 
@@ -390,10 +386,6 @@ fn simple_game() {
         game.move_top((-10, -10).into(), (5, 0).into()),
         Err(GameError::NoPieceAtLocation)
     );
-
-    // TODO: move a black piece
-
-    // game.put(white_grasshopper.clone(), (-1, 0).into()).unwrap(); // white grasshopper is placed at (-1, 0)
 }
 
 #[test]
@@ -422,7 +414,7 @@ fn bee_gets_trapped() {
     };
     let white_ant = Piece {
         bug: Bug::Ant,
-        color: Color::Black,
+        color: Color::White,
     };
     let white_grasshopper = Piece {
         bug: Bug::Grasshopper,
@@ -438,7 +430,7 @@ fn bee_gets_trapped() {
 
     game.move_top((-1, 1).into(), (0, 1).into()).unwrap(); // black beetle moves to (0, 1)
 
-    game.put(white_ant.clone(), (2, -1).into()).unwrap(); // black ant is placed at (2, -1)
+    game.put(white_ant.clone(), (2, -1).into()).unwrap(); // white ant is placed at (2, -1)
 
     game.move_top((0, -1).into(), (1, -1).into()).unwrap(); // black ant moves to (1, -1)
 
