@@ -148,10 +148,7 @@ impl Board {
         neighbors.sub(&hive_without)
     }
 
-    pub(crate) fn hive_and_walkable_neighbors_without(
-        &self,
-        coordinate: Coordinate,
-    ) -> HashSet<Coordinate> {
+    pub(crate) fn hive_and_walkable_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
         let hive_without = self.hive_without(coordinate);
 
         let neighbors: HashSet<Coordinate> = hive_without
