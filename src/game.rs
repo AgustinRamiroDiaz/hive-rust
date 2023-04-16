@@ -115,10 +115,6 @@ impl Game {
             return Err(GameError::PlayerWon(winner));
         }
 
-        if self.board.cells.values().len() == 0 {
-            todo!()
-        }
-
         let piece = self
             .board
             .get_top_piece(from)
