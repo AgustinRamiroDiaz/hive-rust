@@ -5,6 +5,7 @@ use std::vec;
 use crate::board::{self, Board, Coordinate};
 use crate::piece::{Bug, Color, Piece};
 
+#[derive(PartialEq)]
 pub(crate) struct Game {
     turn: Color,
     won: Option<Color>,
