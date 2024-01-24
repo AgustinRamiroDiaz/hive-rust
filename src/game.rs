@@ -28,7 +28,6 @@ pub(crate) enum GameError {
     MustPlaceBeeBeforeMoving,
 }
 
-// TODO: handle block conditions
 impl Game {
     pub(crate) fn new(pool: Vec<Piece>) -> Self {
         Game {
