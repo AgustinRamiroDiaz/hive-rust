@@ -89,9 +89,7 @@ impl Game {
 
     fn end_turn(&mut self) {
         for color in [Color::Black, Color::White] {
-            let bee = self
-                .board
-                .find(|p| p.color == Color::Black && p.bug == Bug::Bee);
+            let bee = self.board.find(|p| p.color == color && p.bug == Bug::Bee);
 
             if let Some(&coordinate) = bee.first() {
                 // TODO: what happens if there are multiple bees?
