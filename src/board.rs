@@ -6,28 +6,28 @@ use std::{
 use crate::coordinate::{Coordinate, CoordinateHandler};
 
 #[derive(PartialEq, Clone)]
-pub(crate) struct StackableHexagonalBoard<T> {
-    cells: HashMap<Coordinate, Cell<T>>,
+pub(crate) struct StackableHexagonalBoard<P> {
+    cells: HashMap<Coordinate, Cell<P>>,
 }
 
 type Cell<T> = Vec<T>;
 
-impl<T> StackableHexagonalBoard<T> {
+impl<P> StackableHexagonalBoard<P> {
     pub(crate) fn new() -> Self {
         StackableHexagonalBoard {
             cells: HashMap::new(),
         }
     }
 
-    pub(crate) fn get_cell(&self, coordinate: Coordinate) -> Option<&Cell<T>> {
+    pub(crate) fn get_cell(&self, coordinate: Coordinate) -> Option<&Cell<P>> {
         self.cells.get(&coordinate)
     }
 
-    pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&T> {
+    pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&P> {
         self.get_cell(coordinate)?.last()
     }
 
-    pub(crate) fn put_piece(&mut self, p: T, coordinate: Coordinate) {
+    pub(crate) fn put_piece(&mut self, p: P, coordinate: Coordinate) {
         match self.cells.get_mut(&coordinate) {
             None => {
                 let cell = vec![p];
@@ -52,7 +52,7 @@ impl<T> StackableHexagonalBoard<T> {
         Ok(())
     }
 
-    fn neighbors(&self, from: Coordinate) -> Vec<(Coordinate, &T)> {
+    fn neighbors(&self, from: Coordinate) -> Vec<(Coordinate, &P)> {
         CoordinateHandler::neighbor_coordinates(from)
             .into_iter()
             .flat_map(|neighbor_coordinate| {
@@ -64,7 +64,7 @@ impl<T> StackableHexagonalBoard<T> {
             .collect()
     }
 
-    pub(crate) fn neighbor_pieces(&self, coordinate: Coordinate) -> Vec<&T> {
+    pub(crate) fn neighbor_pieces(&self, coordinate: Coordinate) -> Vec<&P> {
         self.neighbors(coordinate)
             .iter()
             .map(|(_, piece)| *piece)
@@ -112,7 +112,7 @@ impl<T> StackableHexagonalBoard<T> {
 
     pub(crate) fn find<F>(&self, filter: F) -> Vec<Coordinate>
     where
-        F: Fn(&T) -> bool,
+        F: Fn(&P) -> bool,
     {
         self.cells
             .iter()
