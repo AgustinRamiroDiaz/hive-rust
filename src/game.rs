@@ -101,7 +101,6 @@ impl Game {
         self.turn_number += 1;
     }
 
-    // TODO: move_top is not handling the bee placement condition
     pub(crate) fn move_top(&mut self, from: Coordinate, to: Coordinate) -> Result<(), GameError> {
         if from == to {
             return Err(GameError::InvalidMove);
