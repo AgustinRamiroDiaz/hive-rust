@@ -1,4 +1,3 @@
-use crate::piece;
 use std::{
     collections::{HashMap, HashSet},
     ops::Sub,
@@ -49,28 +48,28 @@ impl std::ops::Sub for Coordinate {
 }
 
 #[derive(PartialEq, Clone)]
-pub(crate) struct StackableHexagonalBoard {
-    cells: HashMap<Coordinate, Cell>,
+pub(crate) struct StackableHexagonalBoard<T> {
+    cells: HashMap<Coordinate, Cell<T>>,
 }
 
-type Cell = Vec<piece::Piece>;
+type Cell<T> = Vec<T>;
 
-impl StackableHexagonalBoard {
+impl<T> StackableHexagonalBoard<T> {
     pub(crate) fn new() -> Self {
         StackableHexagonalBoard {
             cells: HashMap::new(),
         }
     }
 
-    pub(crate) fn get_cell(&self, coordinate: Coordinate) -> Option<&Cell> {
+    pub(crate) fn get_cell(&self, coordinate: Coordinate) -> Option<&Cell<T>> {
         self.cells.get(&coordinate)
     }
 
-    pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&piece::Piece> {
+    pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&T> {
         self.get_cell(coordinate)?.last()
     }
 
-    pub(crate) fn put_piece(&mut self, p: piece::Piece, coordinate: Coordinate) {
+    pub(crate) fn put_piece(&mut self, p: T, coordinate: Coordinate) {
         match self.cells.get_mut(&coordinate) {
             None => {
                 let cell = vec![p];
@@ -95,8 +94,8 @@ impl StackableHexagonalBoard {
         Ok(())
     }
 
-    fn neighbors(&self, from: Coordinate) -> Vec<(Coordinate, &piece::Piece)> {
-        Self::neighbor_coordinates(from)
+    fn neighbors(&self, from: Coordinate) -> Vec<(Coordinate, &T)> {
+        CoordinateHandler::neighbor_coordinates(from)
             .into_iter()
             .flat_map(|neighbor_coordinate| {
                 Some((
@@ -107,19 +106,11 @@ impl StackableHexagonalBoard {
             .collect()
     }
 
-    pub(crate) fn neighbor_pieces(&self, coordinate: Coordinate) -> Vec<&piece::Piece> {
+    pub(crate) fn neighbor_pieces(&self, coordinate: Coordinate) -> Vec<&T> {
         self.neighbors(coordinate)
             .iter()
             .map(|(_, piece)| *piece)
             .collect()
-    }
-
-    pub(crate) fn neighbor_coordinates(from: Coordinate) -> [Coordinate; 6] {
-        RELATIVE_NEIGHBORS_CLOCKWISE.map(|delta| from + delta)
-    }
-
-    pub(crate) fn is_neighboor(a: Coordinate, b: Coordinate) -> bool {
-        RELATIVE_NEIGHBORS_CLOCKWISE.contains(&(a - b))
     }
 
     pub(crate) fn hive(&self) -> HashSet<Coordinate> {
@@ -144,7 +135,7 @@ impl StackableHexagonalBoard {
 
         let neighbors: HashSet<Coordinate> = hive_without
             .iter()
-            .flat_map(|&c| Self::neighbor_coordinates(c))
+            .flat_map(|&c| CoordinateHandler::neighbor_coordinates(c))
             .collect();
 
         neighbors.sub(&hive_without)
@@ -155,10 +146,34 @@ impl StackableHexagonalBoard {
 
         let neighbors: HashSet<Coordinate> = hive_without
             .iter()
-            .flat_map(|&c| Self::neighbor_coordinates(c))
+            .flat_map(|&c| CoordinateHandler::neighbor_coordinates(c))
             .collect();
 
         neighbors.union(&hive_without).copied().collect()
+    }
+
+    pub(crate) fn find<F>(&self, filter: F) -> Vec<Coordinate>
+    where
+        F: Fn(&T) -> bool,
+    {
+        self.cells
+            .iter()
+            .flat_map(|(&c, cell)| Some((c, cell.last()?)))
+            .filter(|(_, p)| filter(p))
+            .map(|(c, _)| c)
+            .collect()
+    }
+}
+
+pub(crate) struct CoordinateHandler {}
+
+impl CoordinateHandler {
+    pub(crate) fn neighbor_coordinates(from: Coordinate) -> [Coordinate; 6] {
+        RELATIVE_NEIGHBORS_CLOCKWISE.map(|delta| from + delta)
+    }
+
+    pub(crate) fn is_neighboor(a: Coordinate, b: Coordinate) -> bool {
+        RELATIVE_NEIGHBORS_CLOCKWISE.contains(&(a - b))
     }
 
     pub(crate) fn can_slide(from: Coordinate, to: Coordinate, hive: &HashSet<Coordinate>) -> bool {
@@ -181,23 +196,12 @@ impl StackableHexagonalBoard {
 
         return left_neighbor.is_none() || right_neighbor.is_none();
     }
-
-    pub(crate) fn find<F>(&self, filter: F) -> Vec<Coordinate>
-    where
-        F: Fn(&piece::Piece) -> bool,
-    {
-        self.cells
-            .iter()
-            .flat_map(|(&c, cell)| Some((c, cell.last()?)))
-            .filter(|(_, p)| filter(p))
-            .map(|(c, _)| c)
-            .collect()
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::piece;
 
     #[test]
     fn simple_board() {
