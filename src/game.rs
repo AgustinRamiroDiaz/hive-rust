@@ -326,120 +326,124 @@ impl Game {
     }
 }
 
-#[test]
-fn simple_game() {
-    let mut game = Game::new(Game::default_pool());
+mod tests {
+    use super::*;
 
-    let black_bee = Piece {
-        bug: Bug::Bee,
-        color: Color::Black,
-    };
-    let white_bee = Piece {
-        bug: Bug::Bee,
-        color: Color::White,
-    };
-    let black_beetle = Piece {
-        bug: Bug::Beetle,
-        color: Color::Black,
-    };
-    let white_beetle = Piece {
-        bug: Bug::Beetle,
-        color: Color::White,
-    };
-    let black_ant = Piece {
-        bug: Bug::Ant,
-        color: Color::Black,
-    };
+    #[test]
+    fn simple_game() {
+        let mut game = Game::new(Game::default_pool());
 
-    game.put(black_bee.clone(), (0, 0).into()).unwrap(); // black bee is placed at (0, 0)
+        let black_bee = Piece {
+            bug: Bug::Bee,
+            color: Color::Black,
+        };
+        let white_bee = Piece {
+            bug: Bug::Bee,
+            color: Color::White,
+        };
+        let black_beetle = Piece {
+            bug: Bug::Beetle,
+            color: Color::Black,
+        };
+        let white_beetle = Piece {
+            bug: Bug::Beetle,
+            color: Color::White,
+        };
+        let black_ant = Piece {
+            bug: Bug::Ant,
+            color: Color::Black,
+        };
 
-    assert_eq!(
-        game.put(black_bee.clone(), (0, 0).into()),
-        Err(GameError::NotYourTurn)
-    ); // it's not black's turn
+        game.put(black_bee.clone(), (0, 0).into()).unwrap(); // black bee is placed at (0, 0)
 
-    game.put(white_bee.clone(), (1, 0).into()).unwrap(); // white bee is placed at (1, 0)
+        assert_eq!(
+            game.put(black_bee.clone(), (0, 0).into()),
+            Err(GameError::NotYourTurn)
+        ); // it's not black's turn
 
-    assert_eq!(
-        game.put(black_beetle.clone(), (2, 0).into()),
-        Err(GameError::SpawnedInOpponentsHive)
-    ); // black beetle cannot spawn in white's hive
+        game.put(white_bee.clone(), (1, 0).into()).unwrap(); // white bee is placed at (1, 0)
 
-    assert_eq!(
-        game.put(black_beetle.clone(), (0, 0).into()),
-        Err(GameError::SpawnedOnTopOfAnotherPiece)
-    ); // pieces cannot spawn on top of another piece
+        assert_eq!(
+            game.put(black_beetle.clone(), (2, 0).into()),
+            Err(GameError::SpawnedInOpponentsHive)
+        ); // black beetle cannot spawn in white's hive
 
-    game.put(black_beetle.clone(), (-1, 0).into()).unwrap(); // black beetle is placed at (-1, 0)
+        assert_eq!(
+            game.put(black_beetle.clone(), (0, 0).into()),
+            Err(GameError::SpawnedOnTopOfAnotherPiece)
+        ); // pieces cannot spawn on top of another piece
 
-    game.put(white_beetle.clone(), (2, 0).into()).unwrap(); // white beetle is placed at (2, 0)
-    game.put(black_ant.clone(), (-1, 1).into()).unwrap(); // black ant is placed at (-1, 1)
+        game.put(black_beetle.clone(), (-1, 0).into()).unwrap(); // black beetle is placed at (-1, 0)
 
-    game.move_top((2, 0).into(), (1, 0).into()).unwrap(); // white beetle moves to (1, 0), stacking on top of the white bee
+        game.put(white_beetle.clone(), (2, 0).into()).unwrap(); // white beetle is placed at (2, 0)
+        game.put(black_ant.clone(), (-1, 1).into()).unwrap(); // black ant is placed at (-1, 1)
 
-    game.move_top((-1, 1).into(), (1, 1).into()).unwrap(); // black ant moves to (1, 1)
+        game.move_top((2, 0).into(), (1, 0).into()).unwrap(); // white beetle moves to (1, 0), stacking on top of the white bee
 
-    assert_eq!(
-        game.move_top((1, 0).into(), (1, 0).into()),
-        Err(GameError::InvalidMove)
-    ); // cannot move to the same location
+        game.move_top((-1, 1).into(), (1, 1).into()).unwrap(); // black ant moves to (1, 1)
 
-    game.move_top((1, 0).into(), (0, 0).into()).unwrap(); // white beetle moves to (0, 0), stacking on top of the black beetle
+        assert_eq!(
+            game.move_top((1, 0).into(), (1, 0).into()),
+            Err(GameError::InvalidMove)
+        ); // cannot move to the same location
 
-    assert_eq!(
-        game.move_top((-10, -10).into(), (5, 0).into()),
-        Err(GameError::NoPieceAtLocation)
-    );
-}
+        game.move_top((1, 0).into(), (0, 0).into()).unwrap(); // white beetle moves to (0, 0), stacking on top of the black beetle
 
-#[test]
-fn bee_gets_trapped() {
-    let mut game = Game::new(Game::default_pool());
+        assert_eq!(
+            game.move_top((-10, -10).into(), (5, 0).into()),
+            Err(GameError::NoPieceAtLocation)
+        );
+    }
 
-    let black_bee = Piece {
-        bug: Bug::Bee,
-        color: Color::Black,
-    };
-    let white_bee = Piece {
-        bug: Bug::Bee,
-        color: Color::White,
-    };
-    let black_beetle = Piece {
-        bug: Bug::Beetle,
-        color: Color::Black,
-    };
-    let white_beetle = Piece {
-        bug: Bug::Beetle,
-        color: Color::White,
-    };
-    let black_ant = Piece {
-        bug: Bug::Ant,
-        color: Color::Black,
-    };
-    let white_ant = Piece {
-        bug: Bug::Ant,
-        color: Color::White,
-    };
-    let white_grasshopper = Piece {
-        bug: Bug::Grasshopper,
-        color: Color::White,
-    };
+    #[test]
+    fn bee_gets_trapped() {
+        let mut game = Game::new(Game::default_pool());
 
-    game.put(black_bee.clone(), (0, 0).into()).unwrap(); // black bee is placed at (0, 0)
-    game.put(white_bee.clone(), (1, 0).into()).unwrap(); // white bee is placed at (1, 0)
-    game.put(black_beetle.clone(), (-1, 1).into()).unwrap(); // black beetle is placed at (-1, 1)
-    game.put(white_beetle.clone(), (2, 0).into()).unwrap(); // white beetle is placed at (2, 0)
-    game.put(black_ant.clone(), (0, -1).into()).unwrap(); // black ant is placed at (0, -1)
-    game.put(white_grasshopper.clone(), (1, 1).into()).unwrap(); // white grasshopper is placed at (1, 1)
+        let black_bee = Piece {
+            bug: Bug::Bee,
+            color: Color::Black,
+        };
+        let white_bee = Piece {
+            bug: Bug::Bee,
+            color: Color::White,
+        };
+        let black_beetle = Piece {
+            bug: Bug::Beetle,
+            color: Color::Black,
+        };
+        let white_beetle = Piece {
+            bug: Bug::Beetle,
+            color: Color::White,
+        };
+        let black_ant = Piece {
+            bug: Bug::Ant,
+            color: Color::Black,
+        };
+        let white_ant = Piece {
+            bug: Bug::Ant,
+            color: Color::White,
+        };
+        let white_grasshopper = Piece {
+            bug: Bug::Grasshopper,
+            color: Color::White,
+        };
 
-    game.move_top((-1, 1).into(), (0, 1).into()).unwrap(); // black beetle moves to (0, 1)
+        game.put(black_bee.clone(), (0, 0).into()).unwrap(); // black bee is placed at (0, 0)
+        game.put(white_bee.clone(), (1, 0).into()).unwrap(); // white bee is placed at (1, 0)
+        game.put(black_beetle.clone(), (-1, 1).into()).unwrap(); // black beetle is placed at (-1, 1)
+        game.put(white_beetle.clone(), (2, 0).into()).unwrap(); // white beetle is placed at (2, 0)
+        game.put(black_ant.clone(), (0, -1).into()).unwrap(); // black ant is placed at (0, -1)
+        game.put(white_grasshopper.clone(), (1, 1).into()).unwrap(); // white grasshopper is placed at (1, 1)
 
-    game.put(white_ant.clone(), (2, -1).into()).unwrap(); // white ant is placed at (2, -1)
+        game.move_top((-1, 1).into(), (0, 1).into()).unwrap(); // black beetle moves to (0, 1)
 
-    game.move_top((0, -1).into(), (1, -1).into()).unwrap(); // black ant moves to (1, -1)
+        game.put(white_ant.clone(), (2, -1).into()).unwrap(); // white ant is placed at (2, -1)
 
-    assert_eq!(
-        game.move_top((1, 1).into(), (0, 1).into()),
-        Err(GameError::PlayerWon(Color::Black))
-    ); // white grasshopper cannot move to (0, 1) because the black bee is trapped
+        game.move_top((0, -1).into(), (1, -1).into()).unwrap(); // black ant moves to (1, -1)
+
+        assert_eq!(
+            game.move_top((1, 1).into(), (0, 1).into()),
+            Err(GameError::PlayerWon(Color::Black))
+        ); // white grasshopper cannot move to (0, 1) because the black bee is trapped
+    }
 }

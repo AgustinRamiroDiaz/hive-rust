@@ -195,57 +195,61 @@ impl Board {
     }
 }
 
-#[test]
-fn simple_board() {
-    use piece::Bug::*;
-    use piece::Color::*;
-    let mut board = Board::new();
-    let black_bee = piece::Piece {
-        bug: Bee,
-        color: Black,
-    };
-    let white_bee = piece::Piece {
-        bug: Bee,
-        color: White,
-    };
-    let black_beetle = piece::Piece {
-        bug: Beetle,
-        color: Black,
-    };
-    let white_beetle = piece::Piece {
-        bug: Beetle,
-        color: White,
-    };
-    let black_ant = piece::Piece {
-        bug: Ant,
-        color: Black,
-    };
+mod tests {
+    use super::*;
 
-    board.put_piece(black_bee.clone(), Coordinate { x: 0, y: 0 });
-    board.put_piece(white_bee.clone(), Coordinate { x: 0, y: 1 });
-    board.put_piece(black_beetle.clone(), Coordinate { x: 0, y: 1 });
-    board.put_piece(white_beetle.clone(), Coordinate { x: 0, y: 1 });
-    board.put_piece(black_ant.clone(), Coordinate { x: 0, y: -1 });
-    board
-        .move_top_piece(Coordinate { x: 0, y: -1 }, Coordinate { x: 1, y: 1 })
-        .unwrap();
-    board
-        .move_top_piece(Coordinate { x: 0, y: 1 }, Coordinate { x: 0, y: 0 })
-        .unwrap();
+    #[test]
+    fn simple_board() {
+        use piece::Bug::*;
+        use piece::Color::*;
+        let mut board = Board::new();
+        let black_bee = piece::Piece {
+            bug: Bee,
+            color: Black,
+        };
+        let white_bee = piece::Piece {
+            bug: Bee,
+            color: White,
+        };
+        let black_beetle = piece::Piece {
+            bug: Beetle,
+            color: Black,
+        };
+        let white_beetle = piece::Piece {
+            bug: Beetle,
+            color: White,
+        };
+        let black_ant = piece::Piece {
+            bug: Ant,
+            color: Black,
+        };
 
-    assert_eq!(
-        board.get_cell(Coordinate { x: 0, y: 0 }),
-        Some(&vec![black_bee, white_beetle])
-    );
-    assert_eq!(
-        board.get_cell(Coordinate { x: 0, y: 1 }),
-        Some(&vec![white_bee, black_beetle])
-    );
-    assert_eq!(
-        board.get_cell(Coordinate { x: 1, y: 1 }),
-        Some(&vec![black_ant])
-    );
-    assert_eq!(board.get_cell((10, 1).into()), None);
+        board.put_piece(black_bee.clone(), Coordinate { x: 0, y: 0 });
+        board.put_piece(white_bee.clone(), Coordinate { x: 0, y: 1 });
+        board.put_piece(black_beetle.clone(), Coordinate { x: 0, y: 1 });
+        board.put_piece(white_beetle.clone(), Coordinate { x: 0, y: 1 });
+        board.put_piece(black_ant.clone(), Coordinate { x: 0, y: -1 });
+        board
+            .move_top_piece(Coordinate { x: 0, y: -1 }, Coordinate { x: 1, y: 1 })
+            .unwrap();
+        board
+            .move_top_piece(Coordinate { x: 0, y: 1 }, Coordinate { x: 0, y: 0 })
+            .unwrap();
 
-    assert!(board.move_top_piece((0, 50).into(), (0, 0).into()).is_err());
+        assert_eq!(
+            board.get_cell(Coordinate { x: 0, y: 0 }),
+            Some(&vec![black_bee, white_beetle])
+        );
+        assert_eq!(
+            board.get_cell(Coordinate { x: 0, y: 1 }),
+            Some(&vec![white_bee, black_beetle])
+        );
+        assert_eq!(
+            board.get_cell(Coordinate { x: 1, y: 1 }),
+            Some(&vec![black_ant])
+        );
+        assert_eq!(board.get_cell((10, 1).into()), None);
+
+        assert!(board.move_top_piece((0, 50).into(), (0, 0).into()).is_err());
+    }
 }
