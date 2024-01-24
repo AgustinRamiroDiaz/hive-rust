@@ -129,12 +129,9 @@ impl Game {
             return Err(GameError::NotYourTurn);
         }
 
-        if !self
-            .can_move(from, to)
-            .or_else(|_| Err(GameError::InvalidMove))?
-        {
-            return Err(GameError::InvalidMove);
-        }
+        let Ok(true) = self.can_move(from, to) else {
+            Err(GameError::InvalidMove)?
+        };
 
         // TODO: remove repetitive errors
         self.board
