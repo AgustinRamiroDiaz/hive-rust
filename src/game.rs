@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 use std::vec;
 
-use crate::board::{self, Board, Coordinate};
+use crate::board::{self, Coordinate, StackableHexagonalBoard};
 use crate::piece::{Bug, Color, Piece};
 
 #[derive(PartialEq, Clone)]
 pub(crate) struct Game {
     turn: Color,
     won: Option<Color>,
-    board: Board,
+    board: StackableHexagonalBoard,
     turn_number: u8,
     pool: Vec<Piece>,
 }
@@ -33,7 +33,7 @@ impl Game {
         Game {
             turn: Color::Black,
             won: None,
-            board: Board::new(),
+            board: StackableHexagonalBoard::new(),
             turn_number: 1,
             pool,
         }
@@ -147,7 +147,7 @@ impl Game {
         let mut to_visit = vec![to];
         while let Some(coordinate) = to_visit.pop() {
             reachable.insert(coordinate);
-            for neighbor in Board::neighbor_coordinates(coordinate) {
+            for neighbor in StackableHexagonalBoard::neighbor_coordinates(coordinate) {
                 if !reachable.contains(&neighbor) && hive.contains(&neighbor) {
                     to_visit.push(neighbor);
                 }
@@ -176,17 +176,18 @@ impl Game {
 
                 let hive = self.board.hive_without(from);
 
-                let neighbor_coordinates = Board::neighbor_coordinates(from).into();
+                let neighbor_coordinates =
+                    StackableHexagonalBoard::neighbor_coordinates(from).into();
                 let slidable_neighbors = walkable
                     .intersection(&neighbor_coordinates)
-                    .filter(|&c| Board::can_slide(from, *c, &hive));
+                    .filter(|&c| StackableHexagonalBoard::can_slide(from, *c, &hive));
 
                 slidable_neighbors.cloned().collect()
             }
             Bug::Beetle => self
                 .board
                 .hive_and_walkable_without(from)
-                .intersection(&Board::neighbor_coordinates(from).into())
+                .intersection(&StackableHexagonalBoard::neighbor_coordinates(from).into())
                 .cloned()
                 .collect(),
             Bug::Grasshopper => {
@@ -222,11 +223,12 @@ impl Game {
                     for path in paths {
                         let last = *path.last().ok_or(())?; // TODO: this should never fail
 
-                        let neighbor_coordinates = Board::neighbor_coordinates(last).into();
+                        let neighbor_coordinates =
+                            StackableHexagonalBoard::neighbor_coordinates(last).into();
                         let walkable_neighbors = walkable.intersection(&neighbor_coordinates);
                         let slidable_neighbors = walkable_neighbors
                             .filter(|&c| !path.contains(c))
-                            .filter(|&c| Board::can_slide(last, *c, &walkable));
+                            .filter(|&c| StackableHexagonalBoard::can_slide(last, *c, &walkable));
 
                         for &neighbor in slidable_neighbors {
                             let mut new_path = path.clone();
@@ -248,10 +250,12 @@ impl Game {
                 let mut to_check = vec![from];
 
                 while let Some(current) = to_check.pop() {
-                    let neighbor_coordinates = Board::neighbor_coordinates(current).into();
-                    let slidable_neighbors = walkable
-                        .intersection(&neighbor_coordinates)
-                        .filter(|&&c| Board::can_slide(current, c, &self.board.hive()));
+                    let neighbor_coordinates =
+                        StackableHexagonalBoard::neighbor_coordinates(current).into();
+                    let slidable_neighbors =
+                        walkable.intersection(&neighbor_coordinates).filter(|&&c| {
+                            StackableHexagonalBoard::can_slide(current, c, &self.board.hive())
+                        });
 
                     for &neighbor in slidable_neighbors {
                         if !reachable.contains(&neighbor) {

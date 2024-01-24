@@ -49,15 +49,15 @@ impl std::ops::Sub for Coordinate {
 }
 
 #[derive(PartialEq, Clone)]
-pub(crate) struct Board {
+pub(crate) struct StackableHexagonalBoard {
     cells: HashMap<Coordinate, Cell>,
 }
 
 type Cell = Vec<piece::Piece>;
 
-impl Board {
+impl StackableHexagonalBoard {
     pub(crate) fn new() -> Self {
-        Board {
+        StackableHexagonalBoard {
             cells: HashMap::new(),
         }
     }
@@ -203,7 +203,7 @@ mod tests {
     fn simple_board() {
         use piece::Bug::*;
         use piece::Color::*;
-        let mut board = Board::new();
+        let mut board = StackableHexagonalBoard::new();
         let black_bee = piece::Piece {
             bug: Bee,
             color: Black,
