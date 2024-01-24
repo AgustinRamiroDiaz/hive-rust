@@ -25,6 +25,7 @@ pub(crate) enum GameError {
     HiveDisconnected,
     PieceNotInPool,
     PlayerWon(Color),
+    MustPlaceBeeBeforeMoving,
 }
 
 // TODO: handle block conditions
@@ -109,8 +110,17 @@ impl Game {
             return Err(GameError::InvalidMove);
         }
 
-        if let Some(winner) = self.won.clone() {
-            return Err(GameError::PlayerWon(winner));
+        if let Some(winner) = &self.won {
+            return Err(GameError::PlayerWon(winner.clone()));
+        }
+
+        if self
+            .pool
+            .iter()
+            .filter(|p| p.color == self.turn)
+            .any(|p| p.bug == Bug::Bee)
+        {
+            return Err(GameError::MustPlaceBeeBeforeMoving);
         }
 
         let piece = self
