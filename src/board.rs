@@ -48,7 +48,7 @@ impl std::ops::Sub for Coordinate {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Board {
     // TODO: Can we make cells private? could it be an implementation detail?
     pub(crate) cells: HashMap<Coordinate, Cell>,

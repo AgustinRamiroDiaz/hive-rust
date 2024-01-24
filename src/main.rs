@@ -15,7 +15,7 @@ enum Msg {
     Piece(piece::Piece), // TODO: this should be a reference
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 struct App {
     selected: Option<Msg>,
     possible_moves: HashSet<Coordinate>,
@@ -335,7 +335,7 @@ fn FnApp() -> Html {
             <div class={if row % 2 != 0 {"sangria"} else {""}}>
             { for ((from_column - (row as f64 / 2.0).floor() as i8)..to_column).map(|column| {
                     html! {
-                    <button class={format!("tile hex {}", if (*state).possible_moves.contains(&(column, row).into()) {"possible-move"} else {""})} onclick={let state = state.clone(); Callback::from(move |_| state.set(update(*state, Msg::Coordinate((column, row)))))}>
+                    <button class={format!("tile hex {}", if (*state).possible_moves.contains(&(column, row).into()) {"possible-move"} else {""})} onclick={let state = state.clone(); Callback::from(move |_| state.set(update((*state).clone(), Msg::Coordinate((column, row)))))}>
                     {
                         (*state).game.get_top_piece((column, row).into()).map(|p| format!("{p}\n({column},{row})")).unwrap_or(format!("({column},{row})"))
                     }
@@ -376,7 +376,10 @@ fn FnApp() -> Html {
                             <button class="button" onclick={
                                 let piece = piece.clone(); // TODO: what is the right way to do this?
                                 let state = state.clone();
-                                Callback::from(move |_| state.set(update(*state, Msg::Piece(piece.clone()))))
+
+                                Callback::from(move |_| {
+                                    state.set(update((*state).clone(), Msg::Piece(piece.clone())))
+                                })
                             }>
                             { format!("{}", piece) }
                             </button>
@@ -393,7 +396,7 @@ fn FnApp() -> Html {
                             <button class="button" onclick={
                                 let piece = piece.clone(); // TODO: what is the right way to do this?
                                 let state = state.clone();
-                                Callback::from(move |_| state.set(update(*state, Msg::Piece(piece.clone()))))
+                                Callback::from(move |_| state.set(update((*state).clone(), Msg::Piece(piece.clone()))))
                             }>
                             { format!("{}", piece) }
                             </button>

@@ -1,11 +1,10 @@
-use std::collections::{HashMap, HashSet};
-use std::fmt::Error;
+use std::collections::HashSet;
 use std::vec;
 
 use crate::board::{self, Board, Coordinate};
 use crate::piece::{Bug, Color, Piece};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Game {
     turn: Color,
     won: Option<Color>,
