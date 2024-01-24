@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 use std::vec;
 
-use crate::board::{self, Coordinate, CoordinateHandler, StackableHexagonalBoard};
+use crate::board::StackableHexagonalBoard;
+use crate::coordinate::{Coordinate, CoordinateHandler, RELATIVE_NEIGHBORS_CLOCKWISE};
 use crate::piece::{Bug, Color, Piece};
 
 #[derive(PartialEq, Clone)]
@@ -193,21 +194,19 @@ impl Game {
                 let hive = self.board.hive_without(from);
 
                 let possible_destinies =
-                    board::RELATIVE_NEIGHBORS_CLOCKWISE
-                        .iter()
-                        .flat_map(|&direction| {
-                            let position = from + direction;
+                    RELATIVE_NEIGHBORS_CLOCKWISE.iter().flat_map(|&direction| {
+                        let position = from + direction;
 
-                            if !hive.contains(&position) {
-                                return None;
-                            }
+                        if !hive.contains(&position) {
+                            return None;
+                        }
 
-                            let mut last = position;
-                            while hive.contains(&last) {
-                                last = last + direction;
-                            }
-                            Some(last)
-                        });
+                        let mut last = position;
+                        while hive.contains(&last) {
+                            last = last + direction;
+                        }
+                        Some(last)
+                    });
 
                 possible_destinies.collect()
             }

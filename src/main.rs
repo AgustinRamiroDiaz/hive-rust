@@ -1,4 +1,5 @@
 mod board;
+mod coordinate;
 mod game;
 mod piece;
 
@@ -7,7 +8,7 @@ use std::collections::HashSet;
 use yew::prelude::*;
 use yew::{html, Component, Context, Html};
 
-use crate::board::Coordinate;
+use crate::coordinate::Coordinate;
 // Define the possible messages which can be sent to the component
 #[derive(Debug, Clone, PartialEq)]
 enum Msg {
