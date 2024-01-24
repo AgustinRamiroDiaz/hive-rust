@@ -54,21 +54,18 @@ impl Game {
 
         let neighbors = self.board.neighbor_pieces(coordinate);
 
-        if self.board.cells.values().len() != 0 && neighbors.is_empty() {
+        if self.board.occupied_amount() != 0 && neighbors.is_empty() {
             return Err(GameError::SpawnedOutOfHive);
         }
 
-        if self.board.cells.values().len() > 1 && neighbors.iter().any(|p| p.color != piece.color) {
+        if self.board.occupied_amount() > 1 && neighbors.iter().any(|p| p.color != piece.color) {
             return Err(GameError::SpawnedInOpponentsHive);
         }
 
         // TODO: test this
-        // TODO: remove the knowledge of the internal board cells
-        let colored_queen_is_not_placed = !self
-            .board
-            .cells
-            .values()
-            .flatten()
+        let colored_queen_is_not_placed = self
+            .pool
+            .iter()
             .any(|p| p.bug == Bug::Bee && p.color == self.turn);
 
         let is_fourth_turn = self.turn_number == 7 || self.turn_number == 8;

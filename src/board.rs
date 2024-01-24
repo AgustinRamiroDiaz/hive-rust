@@ -50,8 +50,7 @@ impl std::ops::Sub for Coordinate {
 
 #[derive(PartialEq, Clone)]
 pub(crate) struct Board {
-    // TODO: Can we make cells private? could it be an implementation detail?
-    pub(crate) cells: HashMap<Coordinate, Cell>,
+    cells: HashMap<Coordinate, Cell>,
 }
 
 type Cell = Vec<piece::Piece>;
@@ -133,6 +132,10 @@ impl Board {
 
     pub(crate) fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
         self.hive().sub(&[coordinate].into())
+    }
+
+    pub(crate) fn occupied_amount(&self) -> usize {
+        self.cells.len()
     }
 
     // Returns the outline walkable cells without taking into account the top piece at the position given
