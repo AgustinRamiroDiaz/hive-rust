@@ -87,7 +87,7 @@ impl Component for App {
                 Ok(moves) => {
                     self.possible_moves = moves;
                 }
-                Err(e) => {}
+                Err(_) => {} // TODO: how should we handle this error?
             },
             _ => {
                 self.possible_moves = HashSet::new();
@@ -272,7 +272,7 @@ fn update(mut app: App, msg: Msg) -> App {
             Ok(moves) => {
                 app.possible_moves = moves;
             }
-            Err(e) => {}
+            Err(_) => {} // TODO: how should we handle this error?
         },
         _ => {
             app.possible_moves = HashSet::new();

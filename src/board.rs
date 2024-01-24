@@ -189,12 +189,13 @@ impl Board {
         self.cells
             .iter()
             .flat_map(|(&c, cell)| Some((c, cell.last()?)))
-            .filter(|(c, p)| filter(p))
+            .filter(|(_, p)| filter(p))
             .map(|(c, _)| c)
             .collect()
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
