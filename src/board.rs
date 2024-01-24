@@ -172,10 +172,6 @@ impl CoordinateHandler {
         RELATIVE_NEIGHBORS_CLOCKWISE.map(|delta| from + delta)
     }
 
-    pub(crate) fn is_neighboor(a: Coordinate, b: Coordinate) -> bool {
-        RELATIVE_NEIGHBORS_CLOCKWISE.contains(&(a - b))
-    }
-
     pub(crate) fn can_slide(from: Coordinate, to: Coordinate, hive: &HashSet<Coordinate>) -> bool {
         let relative_position = to - from;
 
