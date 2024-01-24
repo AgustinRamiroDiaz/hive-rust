@@ -124,13 +124,11 @@ impl Board {
     }
 
     pub(crate) fn hive(&self) -> HashSet<Coordinate> {
-        HashSet::from_iter(self.cells.iter().flat_map(|(&c, _)| {
-            if self.get_top_piece(c).is_some() {
-                Some(c)
-            } else {
-                None
-            }
-        }))
+        HashSet::from_iter(
+            self.cells
+                .iter()
+                .flat_map(|(&c, _)| self.get_top_piece(c).map(|_| c)),
+        )
     }
 
     pub(crate) fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
