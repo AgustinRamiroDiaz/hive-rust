@@ -47,9 +47,9 @@ impl std::ops::Sub for Coordinate {
 pub(crate) trait HexagonalCoordinateSystem {
     type Coord;
 
-    fn neighbor_coordinates(from: Coordinate) -> [Coordinate; 6];
+    fn neighbor_coordinates(from: Self::Coord) -> [Self::Coord; 6];
 
-    fn can_slide(from: Coordinate, to: Coordinate, hive: &HashSet<Coordinate>) -> bool;
+    fn can_slide(from: Self::Coord, to: Self::Coord, hive: &HashSet<Self::Coord>) -> bool;
 }
 
 #[derive(PartialEq, Clone)]

@@ -28,7 +28,7 @@ impl<P> StackableHexagonalBoard<P, AxialCoordinateSystem> {
 
 impl<P, CS> StackableHexagonalBoard<P, CS>
 where
-    CS: HexagonalCoordinateSystem,
+    CS: HexagonalCoordinateSystem<Coord = Coordinate>,
 {
     pub(crate) fn get_cell(&self, coordinate: Coordinate) -> Option<&Cell<P>> {
         self.cells.get(&coordinate)
