@@ -7,17 +7,18 @@ use std::{
 use crate::coordinate::{AxialCoordinateSystem, Coordinate, HexagonalCoordinateSystem};
 
 #[derive(PartialEq, Clone)]
-pub(crate) struct StackableHexagonalBoard<P, CS>
+pub(crate) struct StackableHexagonalBoard<P, CS, C>
 where
-    CS: HexagonalCoordinateSystem,
+    CS: HexagonalCoordinateSystem<Coord = C>,
+    C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
 {
-    cells: HashMap<Coordinate, Cell<P>>,
+    cells: HashMap<C, Cell<P>>,
     pub(crate) coordinate_system: PhantomData<CS>,
 }
 
 type Cell<T> = Vec<T>;
 
-impl<P> StackableHexagonalBoard<P, AxialCoordinateSystem> {
+impl<P> StackableHexagonalBoard<P, AxialCoordinateSystem, Coordinate> {
     pub(crate) fn new() -> Self {
         StackableHexagonalBoard {
             cells: HashMap::new(),
@@ -26,19 +27,20 @@ impl<P> StackableHexagonalBoard<P, AxialCoordinateSystem> {
     }
 }
 
-impl<P, CS> StackableHexagonalBoard<P, CS>
+impl<P, CS, C> StackableHexagonalBoard<P, CS, C>
 where
-    CS: HexagonalCoordinateSystem<Coord = Coordinate>,
+    CS: HexagonalCoordinateSystem<Coord = C>,
+    C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
 {
-    pub(crate) fn get_cell(&self, coordinate: Coordinate) -> Option<&Cell<P>> {
+    pub(crate) fn get_cell(&self, coordinate: C) -> Option<&Cell<P>> {
         self.cells.get(&coordinate)
     }
 
-    pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&P> {
+    pub(crate) fn get_top_piece(&self, coordinate: C) -> Option<&P> {
         self.get_cell(coordinate)?.last()
     }
 
-    pub(crate) fn put_piece(&mut self, p: P, coordinate: Coordinate) {
+    pub(crate) fn put_piece(&mut self, p: P, coordinate: C) {
         match self.cells.get_mut(&coordinate) {
             None => {
                 let cell = vec![p];
@@ -48,11 +50,7 @@ where
         }
     }
 
-    pub(crate) fn move_top_piece(
-        &mut self,
-        from: Coordinate,
-        to: Coordinate,
-    ) -> Result<(), String> {
+    pub(crate) fn move_top_piece(&mut self, from: C, to: C) -> Result<(), String> {
         let from_cell = self
             .cells
             .get_mut(&from)
@@ -63,7 +61,7 @@ where
         Ok(())
     }
 
-    fn neighbors(&self, from: Coordinate) -> Vec<(Coordinate, &P)> {
+    fn neighbors(&self, from: C) -> Vec<(C, &P)> {
         CS::neighbor_coordinates(from)
             .into_iter()
             .flat_map(|neighbor_coordinate| {
@@ -75,14 +73,14 @@ where
             .collect()
     }
 
-    pub(crate) fn neighbor_pieces(&self, coordinate: Coordinate) -> Vec<&P> {
+    pub(crate) fn neighbor_pieces(&self, coordinate: C) -> Vec<&P> {
         self.neighbors(coordinate)
             .iter()
             .map(|(_, piece)| *piece)
             .collect()
     }
 
-    pub(crate) fn hive(&self) -> HashSet<Coordinate> {
+    pub(crate) fn hive(&self) -> HashSet<C> {
         HashSet::from_iter(
             self.cells
                 .iter()
@@ -90,7 +88,7 @@ where
         )
     }
 
-    pub(crate) fn hive_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
+    pub(crate) fn hive_without(&self, coordinate: C) -> HashSet<C> {
         self.hive().sub(&[coordinate].into())
     }
 
@@ -99,10 +97,10 @@ where
     }
 
     // Returns the outline walkable cells without taking into account the top piece at the position given
-    pub(crate) fn walkable_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
+    pub(crate) fn walkable_without(&self, coordinate: C) -> HashSet<C> {
         let hive_without = self.hive_without(coordinate);
 
-        let neighbors: HashSet<Coordinate> = hive_without
+        let neighbors: HashSet<C> = hive_without
             .iter()
             .flat_map(|&c| CS::neighbor_coordinates(c))
             .collect();
@@ -110,10 +108,10 @@ where
         neighbors.sub(&hive_without)
     }
 
-    pub(crate) fn hive_and_walkable_without(&self, coordinate: Coordinate) -> HashSet<Coordinate> {
+    pub(crate) fn hive_and_walkable_without(&self, coordinate: C) -> HashSet<C> {
         let hive_without = self.hive_without(coordinate);
 
-        let neighbors: HashSet<Coordinate> = hive_without
+        let neighbors: HashSet<C> = hive_without
             .iter()
             .flat_map(|&c| CS::neighbor_coordinates(c))
             .collect();
@@ -121,7 +119,7 @@ where
         neighbors.union(&hive_without).copied().collect()
     }
 
-    pub(crate) fn find<F>(&self, filter: F) -> Vec<Coordinate>
+    pub(crate) fn find<F>(&self, filter: F) -> Vec<C>
     where
         F: Fn(&P) -> bool,
     {

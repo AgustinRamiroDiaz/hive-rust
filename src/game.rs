@@ -11,7 +11,7 @@ use crate::piece::{Bug, Color, Piece};
 pub(crate) struct Game {
     turn: Color,
     won: Option<Color>,
-    board: StackableHexagonalBoard<Piece, AxialCoordinateSystem>,
+    board: StackableHexagonalBoard<Piece, AxialCoordinateSystem, Coordinate>,
     turn_number: u8,
     pool: Vec<Piece>,
 }
