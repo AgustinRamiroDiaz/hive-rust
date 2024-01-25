@@ -44,14 +44,25 @@ impl std::ops::Sub for Coordinate {
     }
 }
 
-pub(crate) struct CoordinateHandler {}
+pub(crate) trait HexagonalCoordinateSystem {
+    type Coord;
 
-impl CoordinateHandler {
-    pub(crate) fn neighbor_coordinates(from: Coordinate) -> [Coordinate; 6] {
+    fn neighbor_coordinates(from: Coordinate) -> [Coordinate; 6];
+
+    fn can_slide(from: Coordinate, to: Coordinate, hive: &HashSet<Coordinate>) -> bool;
+}
+
+#[derive(PartialEq, Clone)]
+pub(crate) struct AxialCoordinateSystem {}
+
+impl HexagonalCoordinateSystem for AxialCoordinateSystem {
+    type Coord = Coordinate;
+
+    fn neighbor_coordinates(from: Self::Coord) -> [Self::Coord; 6] {
         RELATIVE_NEIGHBORS_CLOCKWISE.map(|delta| from + delta)
     }
 
-    pub(crate) fn can_slide(from: Coordinate, to: Coordinate, hive: &HashSet<Coordinate>) -> bool {
+    fn can_slide(from: Self::Coord, to: Self::Coord, hive: &HashSet<Self::Coord>) -> bool {
         let relative_position = to - from;
 
         // TODO: remove unwrap

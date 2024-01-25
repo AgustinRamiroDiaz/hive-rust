@@ -1,24 +1,35 @@
+use std::marker::PhantomData;
 use std::{
     collections::{HashMap, HashSet},
     ops::Sub,
 };
 
-use crate::coordinate::{Coordinate, CoordinateHandler};
+use crate::coordinate::{AxialCoordinateSystem, Coordinate, HexagonalCoordinateSystem};
 
 #[derive(PartialEq, Clone)]
-pub(crate) struct StackableHexagonalBoard<P> {
+pub(crate) struct StackableHexagonalBoard<P, CS>
+where
+    CS: HexagonalCoordinateSystem,
+{
     cells: HashMap<Coordinate, Cell<P>>,
+    pub(crate) coordinate_system: PhantomData<CS>,
 }
 
 type Cell<T> = Vec<T>;
 
-impl<P> StackableHexagonalBoard<P> {
+impl<P> StackableHexagonalBoard<P, AxialCoordinateSystem> {
     pub(crate) fn new() -> Self {
         StackableHexagonalBoard {
             cells: HashMap::new(),
+            coordinate_system: PhantomData,
         }
     }
+}
 
+impl<P, CS> StackableHexagonalBoard<P, CS>
+where
+    CS: HexagonalCoordinateSystem,
+{
     pub(crate) fn get_cell(&self, coordinate: Coordinate) -> Option<&Cell<P>> {
         self.cells.get(&coordinate)
     }
@@ -53,7 +64,7 @@ impl<P> StackableHexagonalBoard<P> {
     }
 
     fn neighbors(&self, from: Coordinate) -> Vec<(Coordinate, &P)> {
-        CoordinateHandler::neighbor_coordinates(from)
+        CS::neighbor_coordinates(from)
             .into_iter()
             .flat_map(|neighbor_coordinate| {
                 Some((
@@ -93,7 +104,7 @@ impl<P> StackableHexagonalBoard<P> {
 
         let neighbors: HashSet<Coordinate> = hive_without
             .iter()
-            .flat_map(|&c| CoordinateHandler::neighbor_coordinates(c))
+            .flat_map(|&c| CS::neighbor_coordinates(c))
             .collect();
 
         neighbors.sub(&hive_without)
@@ -104,7 +115,7 @@ impl<P> StackableHexagonalBoard<P> {
 
         let neighbors: HashSet<Coordinate> = hive_without
             .iter()
-            .flat_map(|&c| CoordinateHandler::neighbor_coordinates(c))
+            .flat_map(|&c| CS::neighbor_coordinates(c))
             .collect();
 
         neighbors.union(&hive_without).copied().collect()
