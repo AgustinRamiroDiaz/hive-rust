@@ -4,7 +4,7 @@ use std::{collections::HashSet, error::Error, marker::PhantomData};
 
 // [(-1, 0), (-1, 1), (0, 1), (1, 0), (1, -1), (0, -1)]
 // starts from the left and goes clockwise
-const RELATIVE_NEIGHBORS_CLOCKWISE: [XYCoordinate; 6] = [
+pub(crate) const RELATIVE_NEIGHBORS_CLOCKWISE: [XYCoordinate; 6] = [
     XYCoordinate { x: -1, y: 0 },
     XYCoordinate { x: -1, y: 1 },
     XYCoordinate { x: 0, y: 1 },
@@ -65,9 +65,19 @@ pub(crate) trait NewHexagonalCoordinateSystem {
     fn relative_neighbors_clockwise(&self) -> [Self::Direction; 6];
 }
 
-struct GenericCoordinateSystem<Coord, Direction> {
+#[derive(PartialEq, Clone)]
+pub(crate) struct GenericCoordinateSystem<Coordinate, Direction> {
     neighbors: [Direction; 6],
-    _phantom: PhantomData<Coord>,
+    _phantom: PhantomData<Coordinate>,
+}
+
+impl<Coordinate, Direction> GenericCoordinateSystem<Coordinate, Direction> {
+    pub(crate) fn new(neighbors: [Direction; 6]) -> Self {
+        Self {
+            neighbors,
+            _phantom: PhantomData,
+        }
+    }
 }
 
 impl<Coordinate, Direction> NewHexagonalCoordinateSystem

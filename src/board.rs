@@ -1,32 +1,31 @@
-use std::marker::PhantomData;
 use std::{
     collections::{HashMap, HashSet},
     ops::Sub,
 };
 
-use crate::coordinate::HexagonalCoordinateSystem;
+use crate::coordinate::NewHexagonalCoordinateSystem;
 
 #[derive(PartialEq, Clone)]
 pub(crate) struct StackableHexagonalBoard<P, CS, C>
 where
-    CS: HexagonalCoordinateSystem<Coordinate = C>,
+    CS: NewHexagonalCoordinateSystem<Coordinate = C>,
     C: std::hash::Hash + std::cmp::Eq,
 {
     cells: HashMap<C, Cell<P>>,
-    pub(crate) coordinate_system: PhantomData<CS>,
+    pub(crate) coordinate_system: CS,
 }
 
 type Cell<T> = Vec<T>;
 
 impl<P, CS, C> StackableHexagonalBoard<P, CS, C>
 where
-    CS: HexagonalCoordinateSystem<Coordinate = C>,
+    CS: NewHexagonalCoordinateSystem<Coordinate = C>,
     C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
 {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(cs: CS) -> Self {
         StackableHexagonalBoard {
             cells: HashMap::new(),
-            coordinate_system: PhantomData,
+            coordinate_system: cs,
         }
     }
 
@@ -60,7 +59,8 @@ where
     }
 
     fn neighbors(&self, from: C) -> Vec<(C, &P)> {
-        CS::neighbor_coordinates(from)
+        self.coordinate_system
+            .neighbor_coordinates(from)
             .into_iter()
             .flat_map(|neighbor_coordinate| {
                 Some((
@@ -100,7 +100,7 @@ where
 
         let neighbors: HashSet<C> = hive_without
             .iter()
-            .flat_map(|&c| CS::neighbor_coordinates(c))
+            .flat_map(|&c| self.coordinate_system.neighbor_coordinates(c))
             .collect();
 
         neighbors.sub(&hive_without)
@@ -111,7 +111,7 @@ where
 
         let neighbors: HashSet<C> = hive_without
             .iter()
-            .flat_map(|&c| CS::neighbor_coordinates(c))
+            .flat_map(|&c| self.coordinate_system.neighbor_coordinates(c))
             .collect();
 
         neighbors.union(&hive_without).copied().collect()
@@ -134,7 +134,7 @@ where
 mod tests {
     use super::*;
     use crate::{
-        coordinate::{AxialCoordinateSystem, XYCoordinate},
+        coordinate::{GenericCoordinateSystem, XYCoordinate, RELATIVE_NEIGHBORS_CLOCKWISE},
         piece,
     };
 
@@ -142,8 +142,9 @@ mod tests {
     fn simple_board() {
         use piece::Bug::*;
         use piece::Color::*;
-        let mut board: StackableHexagonalBoard<_, AxialCoordinateSystem, _> =
-            StackableHexagonalBoard::new();
+        let mut board = StackableHexagonalBoard::new(GenericCoordinateSystem::new(
+            RELATIVE_NEIGHBORS_CLOCKWISE,
+        ));
         let black_bee = piece::Piece {
             bug: Bee,
             color: Black,
