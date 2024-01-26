@@ -20,7 +20,7 @@ enum Msg {
 struct App {
     selected: Option<Msg>,
     possible_moves: HashSet<XYCoordinate>,
-    game: game::Game,
+    game: game::Game<piece::Piece>,
     game_error: String,
 }
 

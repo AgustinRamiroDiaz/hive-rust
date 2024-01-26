@@ -64,3 +64,18 @@ impl std::fmt::Display for Piece {
         write!(f, "{} {}", self.color, self.bug)
     }
 }
+
+pub(crate) trait PieceTrait {
+    fn color(&self) -> &Color;
+    fn bug(&self) -> &Bug;
+}
+
+impl PieceTrait for Piece {
+    fn color(&self) -> &Color {
+        &self.color
+    }
+
+    fn bug(&self) -> &Bug {
+        &self.bug
+    }
+}

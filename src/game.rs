@@ -5,10 +5,10 @@ use crate::board::StackableHexagonalBoard;
 use crate::coordinate::{
     GenericCoordinateSystem, HexagonalCoordinateSystem, XYCoordinate, RELATIVE_NEIGHBORS_CLOCKWISE,
 };
-use crate::piece::{Bug, Color, Piece};
+use crate::piece::{self, Bug, Color, PieceTrait};
 
 #[derive(PartialEq, Clone)]
-pub(crate) struct Game {
+pub(crate) struct Game<Piece> {
     turn: Color,
     result: Option<GameResult>,
     board: StackableHexagonalBoard<
@@ -41,7 +41,10 @@ pub(crate) enum GameError {
     MustPlaceBeeBeforeMoving,
 }
 
-impl Game {
+impl<Piece> Game<Piece>
+where
+    Piece: PieceTrait + PartialEq,
+{
     pub(crate) fn new(pool: Vec<Piece>) -> Self {
         Game {
             turn: Color::Black,
@@ -58,7 +61,7 @@ impl Game {
             return Err(GameError::GameFinished(winner));
         }
 
-        if piece.color != self.turn {
+        if piece.color() != &self.turn {
             return Err(GameError::NotYourTurn);
         }
 
@@ -72,7 +75,8 @@ impl Game {
             return Err(GameError::SpawnedOutOfHive);
         }
 
-        if self.board.occupied_amount() > 1 && neighbors.iter().any(|p| p.color != piece.color) {
+        if self.board.occupied_amount() > 1 && neighbors.iter().any(|p| p.color() != piece.color())
+        {
             return Err(GameError::SpawnedInOpponentsHive);
         }
 
@@ -80,11 +84,11 @@ impl Game {
         let colored_queen_is_not_placed = self
             .pool
             .iter()
-            .any(|p| p.bug == Bug::Bee && p.color == self.turn);
+            .any(|p| p.bug() == &Bug::Bee && p.color() == &self.turn);
 
         let is_fourth_turn = self.turn_number == 7 || self.turn_number == 8;
 
-        if is_fourth_turn && piece.bug != Bug::Bee && colored_queen_is_not_placed {
+        if is_fourth_turn && piece.bug() != &Bug::Bee && colored_queen_is_not_placed {
             return Err(GameError::QueenMustBePlacedBeforeFifthTurn);
         }
 
@@ -103,7 +107,9 @@ impl Game {
         // TODO: we are supposing that there are only 2 players
         // Once we extend the game to support more players, this will have to change
         let color_enclosed = [Color::Black, Color::White].map(|color| {
-            let bee = self.board.find(|p| p.color == color && p.bug == Bug::Bee);
+            let bee = self
+                .board
+                .find(|p| p.color() == &color && p.bug() == &Bug::Bee);
 
             let any_enclosed = bee
                 .iter()
@@ -139,8 +145,8 @@ impl Game {
         if self
             .pool
             .iter()
-            .filter(|p| p.color == self.turn)
-            .any(|p| p.bug == Bug::Bee)
+            .filter(|p| p.color() == &self.turn)
+            .any(|p| p.bug() == &Bug::Bee)
         {
             return Err(GameError::MustPlaceBeeBeforeMoving);
         }
@@ -150,7 +156,7 @@ impl Game {
             .get_top_piece(from)
             .ok_or(GameError::NoPieceAtLocation)?;
 
-        if piece.color != self.turn {
+        if piece.color() != &self.turn {
             return Err(GameError::NotYourTurn);
         }
 
@@ -197,7 +203,7 @@ impl Game {
     pub(crate) fn possible_moves(&self, from: XYCoordinate) -> Result<HashSet<XYCoordinate>, ()> {
         let piece = self.board.get_top_piece(from).ok_or(())?;
 
-        Ok(match piece.bug {
+        Ok(match piece.bug() {
             Bug::Bee => {
                 let walkable = self.board.walkable_without(from);
 
@@ -331,52 +337,6 @@ impl Game {
         &self.pool
     }
 
-    pub(crate) fn default_pool() -> Vec<Piece> {
-        [Color::Black, Color::White]
-            .iter()
-            .flat_map(|color| {
-                vec![
-                    (
-                        1,
-                        Piece {
-                            bug: Bug::Bee,
-                            color: color.clone(),
-                        },
-                    ),
-                    (
-                        2,
-                        Piece {
-                            bug: Bug::Beetle,
-                            color: color.clone(),
-                        },
-                    ),
-                    (
-                        2,
-                        Piece {
-                            bug: Bug::Spider,
-                            color: color.clone(),
-                        },
-                    ),
-                    (
-                        3,
-                        Piece {
-                            bug: Bug::Ant,
-                            color: color.clone(),
-                        },
-                    ),
-                    (
-                        3,
-                        Piece {
-                            bug: Bug::Grasshopper,
-                            color: color.clone(),
-                        },
-                    ),
-                ]
-            })
-            .flat_map(|(count, piece)| (0..count).map(move |_| piece.clone()))
-            .collect()
-    }
-
     pub(crate) fn get_top_piece(&self, coordinate: XYCoordinate) -> Option<&Piece> {
         self.board.get_top_piece(coordinate)
     }
@@ -386,8 +346,58 @@ impl Game {
     }
 }
 
+impl Game<piece::Piece> {
+    pub(crate) fn default_pool() -> Vec<piece::Piece> {
+        [Color::Black, Color::White]
+            .iter()
+            .flat_map(|color| {
+                vec![
+                    (
+                        1,
+                        piece::Piece {
+                            bug: Bug::Bee,
+                            color: color.clone(),
+                        },
+                    ),
+                    (
+                        2,
+                        piece::Piece {
+                            bug: Bug::Beetle,
+                            color: color.clone(),
+                        },
+                    ),
+                    (
+                        2,
+                        piece::Piece {
+                            bug: Bug::Spider,
+                            color: color.clone(),
+                        },
+                    ),
+                    (
+                        3,
+                        piece::Piece {
+                            bug: Bug::Ant,
+                            color: color.clone(),
+                        },
+                    ),
+                    (
+                        3,
+                        piece::Piece {
+                            bug: Bug::Grasshopper,
+                            color: color.clone(),
+                        },
+                    ),
+                ]
+            })
+            .flat_map(|(count, piece)| (0..count).map(move |_| piece.clone()))
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::piece::Piece;
+
     use super::*;
 
     #[test]
