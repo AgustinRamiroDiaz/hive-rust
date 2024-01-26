@@ -1,4 +1,4 @@
-use std::{collections::HashSet, marker::PhantomData};
+use std::{collections::HashSet, error::Error, marker::PhantomData};
 
 // Useful guide for understanding hexagonal coordinates: https://www.redblobgames.com/grids/hexagons/#neighbors-axial
 
@@ -60,7 +60,7 @@ pub(crate) trait NewHexagonalCoordinateSystem {
         from: Self::Coordinate,
         to: Self::Coordinate,
         hive: &HashSet<Self::Coordinate>,
-    ) -> bool;
+    ) -> Result<bool, Box<dyn Error>>;
 
     fn relative_neighbors_clockwise(&self) -> [Self::Direction; 6];
 }
@@ -81,7 +81,7 @@ where
         + std::ops::Sub<Output = Coordinate>
         + Copy
         + std::convert::TryInto<Direction>,
-    <Coordinate as TryInto<Direction>>::Error: std::fmt::Debug,
+    <Coordinate as TryInto<Direction>>::Error: Error + 'static,
     Direction: Copy + PartialEq,
 {
     type Coordinate = Coordinate;
@@ -95,16 +95,14 @@ where
         from: Self::Coordinate,
         to: Self::Coordinate,
         occupied: &HashSet<Self::Coordinate>,
-    ) -> bool {
-        // TODO: remove unwrap
-        let relative_position = (to - from).try_into().unwrap();
+    ) -> Result<bool, Box<dyn Error>> {
+        let relative_position = (to - from).try_into()?;
 
-        // TODO: remove unwrap
         let relative_neighbors_position = self
             .neighbors
             .iter()
             .position(|&p| p == relative_position)
-            .unwrap();
+            .ok_or("Direction not found in the possible existent directions")?;
 
         let relative_right_neighbor = self.neighbors[(relative_neighbors_position + 1) % 6];
         let relative_left_neighbor = self.neighbors[(relative_neighbors_position + 5) % 6];
@@ -113,7 +111,7 @@ where
 
         let left_neighbor = occupied.get(&(from + relative_left_neighbor));
 
-        return left_neighbor.is_none() || right_neighbor.is_none();
+        Ok(left_neighbor.is_none() || right_neighbor.is_none())
     }
 
     fn relative_neighbors_clockwise(&self) -> [Self::Direction; 6] {
