@@ -72,8 +72,10 @@ where
         + PartialEq
         + Eq
         + std::hash::Hash
-        + std::ops::Sub<Output = Direction>
-        + Copy,
+        + std::ops::Sub<Output = Coord>
+        + Copy
+        + std::convert::TryInto<Direction>,
+    <Coord as TryInto<Direction>>::Error: std::fmt::Debug,
     Direction: Copy + PartialEq,
 {
     type Coord = Coord;
@@ -88,7 +90,8 @@ where
         to: Self::Coord,
         occupied: &HashSet<Self::Coord>,
     ) -> bool {
-        let relative_position = to - from;
+        // TODO: remove unwrap
+        let relative_position = (to - from).try_into().unwrap();
 
         // TODO: remove unwrap
         let relative_neighbors_position = self
