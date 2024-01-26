@@ -47,7 +47,7 @@ impl std::ops::Sub for XYCoordinate {
     }
 }
 
-pub(crate) trait NewHexagonalCoordinateSystem {
+pub(crate) trait HexagonalCoordinateSystem {
     type Coordinate;
     type Direction;
 
@@ -80,7 +80,7 @@ impl<Coordinate, Direction> GenericCoordinateSystem<Coordinate, Direction> {
     }
 }
 
-impl<Coordinate, Direction> NewHexagonalCoordinateSystem
+impl<Coordinate, Direction> HexagonalCoordinateSystem
     for GenericCoordinateSystem<Coordinate, Direction>
 where
     Coordinate: std::ops::Add

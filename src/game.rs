@@ -3,8 +3,7 @@ use std::vec;
 
 use crate::board::StackableHexagonalBoard;
 use crate::coordinate::{
-    GenericCoordinateSystem, NewHexagonalCoordinateSystem, XYCoordinate,
-    RELATIVE_NEIGHBORS_CLOCKWISE,
+    GenericCoordinateSystem, HexagonalCoordinateSystem, XYCoordinate, RELATIVE_NEIGHBORS_CLOCKWISE,
 };
 use crate::piece::{Bug, Color, Piece};
 

@@ -3,12 +3,12 @@ use std::{
     ops::Sub,
 };
 
-use crate::coordinate::NewHexagonalCoordinateSystem;
+use crate::coordinate::HexagonalCoordinateSystem;
 
 #[derive(PartialEq, Clone)]
 pub(crate) struct StackableHexagonalBoard<P, CS, C>
 where
-    CS: NewHexagonalCoordinateSystem<Coordinate = C>,
+    CS: HexagonalCoordinateSystem<Coordinate = C>,
     C: std::hash::Hash + std::cmp::Eq,
 {
     cells: HashMap<C, Cell<P>>,
@@ -19,7 +19,7 @@ type Cell<T> = Vec<T>;
 
 impl<P, CS, C> StackableHexagonalBoard<P, CS, C>
 where
-    CS: NewHexagonalCoordinateSystem<Coordinate = C>,
+    CS: HexagonalCoordinateSystem<Coordinate = C>,
     C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
 {
     pub(crate) fn new(cs: CS) -> Self {
