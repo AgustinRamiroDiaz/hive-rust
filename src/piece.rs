@@ -1,6 +1,9 @@
 #[derive(PartialEq, Debug, Clone)]
-pub(crate) struct Piece {
-    pub(crate) bug: Bug,
+pub(crate) struct Piece<B>
+where
+    B: BugTrait,
+{
+    pub(crate) bug: B,
     pub(crate) color: Color,
 }
 
@@ -12,6 +15,10 @@ pub(crate) enum Bug {
     Spider,
     Ant,
 }
+
+pub(crate) trait BugTrait: PartialEq + std::fmt::Debug + Clone {}
+
+impl BugTrait for Bug {}
 
 impl std::fmt::Display for Bug {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -59,7 +66,7 @@ impl std::fmt::Display for Color {
     }
 }
 
-impl std::fmt::Display for Piece {
+impl std::fmt::Display for Piece<Bug> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.color, self.bug)
     }

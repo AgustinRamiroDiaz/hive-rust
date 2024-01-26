@@ -12,12 +12,12 @@ pub(crate) struct Game {
     turn: Color,
     result: Option<GameResult>,
     board: StackableHexagonalBoard<
-        Piece,
+        Piece<Bug>,
         GenericCoordinateSystem<XYCoordinate, XYCoordinate>,
         XYCoordinate,
     >,
     turn_number: u8,
-    pool: Vec<Piece>,
+    pool: Vec<Piece<Bug>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -42,7 +42,7 @@ pub(crate) enum GameError {
 }
 
 impl Game {
-    pub(crate) fn new(pool: Vec<Piece>) -> Self {
+    pub(crate) fn new(pool: Vec<Piece<Bug>>) -> Self {
         Game {
             turn: Color::Black,
             result: None,
@@ -53,7 +53,11 @@ impl Game {
             pool,
         }
     }
-    pub(crate) fn put(&mut self, piece: Piece, coordinate: XYCoordinate) -> Result<(), GameError> {
+    pub(crate) fn put(
+        &mut self,
+        piece: Piece<Bug>,
+        coordinate: XYCoordinate,
+    ) -> Result<(), GameError> {
         if let Some(winner) = self.result.clone() {
             return Err(GameError::GameFinished(winner));
         }
@@ -327,11 +331,11 @@ impl Game {
         })
     }
 
-    pub(crate) fn get_pool(&self) -> &Vec<Piece> {
+    pub(crate) fn get_pool(&self) -> &Vec<Piece<Bug>> {
         &self.pool
     }
 
-    pub(crate) fn default_pool() -> Vec<Piece> {
+    pub(crate) fn default_pool() -> Vec<Piece<Bug>> {
         [Color::Black, Color::White]
             .iter()
             .flat_map(|color| {
@@ -377,7 +381,7 @@ impl Game {
             .collect()
     }
 
-    pub(crate) fn get_top_piece(&self, coordinate: XYCoordinate) -> Option<&Piece> {
+    pub(crate) fn get_top_piece(&self, coordinate: XYCoordinate) -> Option<&Piece<Bug>> {
         self.board.get_top_piece(coordinate)
     }
 

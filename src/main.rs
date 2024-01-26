@@ -5,6 +5,7 @@ mod piece;
 
 use std::collections::HashSet;
 
+use piece::Bug;
 use yew::prelude::*;
 use yew::{html, Component, Context, Html};
 
@@ -13,7 +14,7 @@ use crate::coordinate::XYCoordinate;
 #[derive(Debug, Clone, PartialEq)]
 enum Msg {
     Coordinate((i8, i8)),
-    Piece(piece::Piece), // TODO: this should be a reference
+    Piece(piece::Piece<Bug>), // TODO: this should be a reference
 }
 
 #[derive(PartialEq, Clone)]
