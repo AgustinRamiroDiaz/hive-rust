@@ -87,7 +87,10 @@ where
     }
 
     pub(crate) fn hive_without(&self, coordinate: C) -> HashSet<C> {
-        self.hive().sub(&[coordinate].into())
+        match self.get_cell(coordinate).unwrap_or(&vec![]).len() {
+            0 | 1 => self.hive().sub(&[coordinate].into()),
+            _ => self.hive(),
+        }
     }
 
     pub(crate) fn occupied_amount(&self) -> usize {
