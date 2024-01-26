@@ -112,7 +112,7 @@ where
             .neighbors
             .iter()
             .position(|&p| p == relative_position)
-            .ok_or("Direction not found in the possible existent directions")?;
+            .ok_or("Direction not found in the possible existent directions")?; // TODO: is there a way to do this so that the type system does the check for us and we don't need to do it at runtime?
 
         let relative_right_neighbor = self.neighbors[(relative_neighbors_position + 1) % 6];
         let relative_left_neighbor = self.neighbors[(relative_neighbors_position + 5) % 6];
