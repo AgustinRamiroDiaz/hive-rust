@@ -10,7 +10,7 @@ use crate::coordinate::HexagonalCoordinateSystem;
 pub(crate) struct StackableHexagonalBoard<P, CS, C>
 where
     CS: HexagonalCoordinateSystem<Coordinate = C>,
-    C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
+    C: std::hash::Hash + std::cmp::Eq,
 {
     cells: HashMap<C, Cell<P>>,
     pub(crate) coordinate_system: PhantomData<CS>,
