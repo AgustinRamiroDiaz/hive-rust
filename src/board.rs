@@ -4,7 +4,7 @@ use std::{
     ops::Sub,
 };
 
-use crate::coordinate::{AxialCoordinateSystem, Coordinate, HexagonalCoordinateSystem};
+use crate::coordinate::HexagonalCoordinateSystem;
 
 #[derive(PartialEq, Clone)]
 pub(crate) struct StackableHexagonalBoard<P, CS, C>
@@ -18,20 +18,18 @@ where
 
 type Cell<T> = Vec<T>;
 
-impl<P> StackableHexagonalBoard<P, AxialCoordinateSystem, Coordinate> {
+impl<P, CS, C> StackableHexagonalBoard<P, CS, C>
+where
+    CS: HexagonalCoordinateSystem<Coord = C>,
+    C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
+{
     pub(crate) fn new() -> Self {
         StackableHexagonalBoard {
             cells: HashMap::new(),
             coordinate_system: PhantomData,
         }
     }
-}
 
-impl<P, CS, C> StackableHexagonalBoard<P, CS, C>
-where
-    CS: HexagonalCoordinateSystem<Coord = C>,
-    C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
-{
     pub(crate) fn get_cell(&self, coordinate: C) -> Option<&Cell<P>> {
         self.cells.get(&coordinate)
     }
@@ -135,13 +133,17 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::piece;
+    use crate::{
+        coordinate::{AxialCoordinateSystem, Coordinate},
+        piece,
+    };
 
     #[test]
     fn simple_board() {
         use piece::Bug::*;
         use piece::Color::*;
-        let mut board = StackableHexagonalBoard::new();
+        let mut board: StackableHexagonalBoard<_, AxialCoordinateSystem, _> =
+            StackableHexagonalBoard::new();
         let black_bee = piece::Piece {
             bug: Bee,
             color: Black,
