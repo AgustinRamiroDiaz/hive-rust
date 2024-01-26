@@ -2,9 +2,7 @@ use std::collections::HashSet;
 use std::vec;
 
 use crate::board::StackableHexagonalBoard;
-use crate::coordinate::{
-    AxialCoordinateSystem, Coordinate, HexagonalCoordinateSystem, RELATIVE_NEIGHBORS_CLOCKWISE,
-};
+use crate::coordinate::{AxialCoordinateSystem, Coordinate, HexagonalCoordinateSystem};
 use crate::piece::{Bug, Color, Piece};
 
 #[derive(PartialEq, Clone)]
@@ -205,8 +203,9 @@ impl Game {
             Bug::Grasshopper => {
                 let hive = self.board.hive_without(from);
 
-                let possible_destinies =
-                    RELATIVE_NEIGHBORS_CLOCKWISE.iter().flat_map(|&direction| {
+                let possible_destinies = AxialCoordinateSystem::relative_neighbors_clockwise()
+                    .into_iter()
+                    .flat_map(|direction| {
                         let position = from + direction;
 
                         if !hive.contains(&position) {

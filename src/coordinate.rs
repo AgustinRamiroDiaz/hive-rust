@@ -4,7 +4,7 @@ use std::collections::HashSet;
 
 // [(-1, 0), (-1, 1), (0, 1), (1, 0), (1, -1), (0, -1)]
 // starts from the left and goes clockwise
-pub(crate) const RELATIVE_NEIGHBORS_CLOCKWISE: [Coordinate; 6] = [
+const RELATIVE_NEIGHBORS_CLOCKWISE: [Coordinate; 6] = [
     Coordinate { x: -1, y: 0 },
     Coordinate { x: -1, y: 1 },
     Coordinate { x: 0, y: 1 },
@@ -53,6 +53,8 @@ pub(crate) trait HexagonalCoordinateSystem {
     fn neighbor_coordinates(from: Self::Coord) -> [Self::Coord; 6];
 
     fn can_slide(from: Self::Coord, to: Self::Coord, hive: &HashSet<Self::Coord>) -> bool;
+
+    fn relative_neighbors_clockwise() -> [Self::Coord; 6];
 }
 
 // 2 axis aligned with the hive, flat top
@@ -97,5 +99,9 @@ impl HexagonalCoordinateSystem for AxialCoordinateSystem {
         let left_neighbor = hive.get(&(from + relative_left_neighbor));
 
         return left_neighbor.is_none() || right_neighbor.is_none();
+    }
+
+    fn relative_neighbors_clockwise() -> [Self::Coord; 6] {
+        RELATIVE_NEIGHBORS_CLOCKWISE
     }
 }
