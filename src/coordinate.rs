@@ -52,6 +52,18 @@ pub(crate) trait HexagonalCoordinateSystem {
     fn can_slide(from: Self::Coord, to: Self::Coord, hive: &HashSet<Self::Coord>) -> bool;
 }
 
+// 2 axis aligned with the hive
+//
+//                 / y axis
+//                /
+//    -1,1      0,1      1,1
+//              /
+//             /
+//-1,0      0,0      1,0   ------> x axis
+//
+//
+//    0,-1     1,-1     2,-1
+//
 #[derive(PartialEq, Clone)]
 pub(crate) struct AxialCoordinateSystem {}
 
