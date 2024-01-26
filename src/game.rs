@@ -10,10 +10,16 @@ use crate::piece::{Bug, Color, Piece};
 #[derive(PartialEq, Clone)]
 pub(crate) struct Game {
     turn: Color,
-    won: Option<Color>,
+    result: Option<GameResult>,
     board: StackableHexagonalBoard<Piece, AxialCoordinateSystem, Coordinate>,
     turn_number: u8,
     pool: Vec<Piece>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub(crate) enum GameResult {
+    Win(Color),
+    Draw,
 }
 
 #[derive(Debug, PartialEq)]
@@ -27,7 +33,7 @@ pub(crate) enum GameError {
     SpawnedOutOfHive,
     HiveDisconnected,
     PieceNotInPool,
-    PlayerWon(Color),
+    GameFinished(GameResult),
     MustPlaceBeeBeforeMoving,
 }
 
@@ -35,15 +41,15 @@ impl Game {
     pub(crate) fn new(pool: Vec<Piece>) -> Self {
         Game {
             turn: Color::Black,
-            won: None,
+            result: None,
             board: StackableHexagonalBoard::new(),
             turn_number: 1,
             pool,
         }
     }
     pub(crate) fn put(&mut self, piece: Piece, coordinate: Coordinate) -> Result<(), GameError> {
-        if let Some(winner) = self.won.clone() {
-            return Err(GameError::PlayerWon(winner));
+        if let Some(winner) = self.result.clone() {
+            return Err(GameError::GameFinished(winner));
         }
 
         if piece.color != self.turn {
@@ -88,15 +94,23 @@ impl Game {
     }
 
     fn end_turn(&mut self) {
-        for color in [Color::Black, Color::White] {
+        // TODO: we are supposing that there are only 2 players
+        // Once we extend the game to support more players, this will have to change
+        let color_enclosed = [Color::Black, Color::White].map(|color| {
             let bee = self.board.find(|p| p.color == color && p.bug == Bug::Bee);
 
-            if let Some(&coordinate) = bee.first() {
-                // TODO: what happens if there are multiple bees?
-                if self.board.neighbor_pieces(coordinate).len() == 6 {
-                    self.won = Some(!color);
-                }
-            }
+            let any_enclosed = bee
+                .iter()
+                .any(|&coordinate| self.board.neighbor_pieces(coordinate).len() == 6);
+
+            (color, any_enclosed)
+        });
+
+        match color_enclosed {
+            [(_, true), (_, true)] => self.result = Some(GameResult::Draw),
+            [(_, true), (color, _)] => self.result = Some(GameResult::Win(color)),
+            [(color, _), (_, true)] => self.result = Some(GameResult::Win(color)),
+            _ => {}
         }
 
         self.turn = !self.turn.clone();
@@ -108,8 +122,8 @@ impl Game {
             return Err(GameError::InvalidMove);
         }
 
-        if let Some(winner) = &self.won {
-            return Err(GameError::PlayerWon(winner.clone()));
+        if let Some(winner) = &self.result {
+            return Err(GameError::GameFinished(winner.clone()));
         }
 
         if self
@@ -444,7 +458,7 @@ mod tests {
 
         assert_eq!(
             game.move_top((1, 1).into(), (0, 1).into()),
-            Err(GameError::PlayerWon(Color::Black))
+            Err(GameError::GameFinished(GameResult::Win(Color::Black)))
         ); // white grasshopper cannot move to (0, 1) because the black bee is trapped
     }
 }
