@@ -9,7 +9,7 @@ use crate::coordinate::HexagonalCoordinateSystem;
 #[derive(PartialEq, Clone)]
 pub(crate) struct StackableHexagonalBoard<P, CS, C>
 where
-    CS: HexagonalCoordinateSystem<Coord = C>,
+    CS: HexagonalCoordinateSystem<Coordinate = C>,
     C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
 {
     cells: HashMap<C, Cell<P>>,
@@ -20,7 +20,7 @@ type Cell<T> = Vec<T>;
 
 impl<P, CS, C> StackableHexagonalBoard<P, CS, C>
 where
-    CS: HexagonalCoordinateSystem<Coord = C>,
+    CS: HexagonalCoordinateSystem<Coordinate = C>,
     C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
 {
     pub(crate) fn new() -> Self {
@@ -134,7 +134,7 @@ where
 mod tests {
     use super::*;
     use crate::{
-        coordinate::{AxialCoordinateSystem, Coordinate},
+        coordinate::{AxialCoordinateSystem, XYCoordinate},
         piece,
     };
 
@@ -165,28 +165,28 @@ mod tests {
             color: Black,
         };
 
-        board.put_piece(black_bee.clone(), Coordinate { x: 0, y: 0 });
-        board.put_piece(white_bee.clone(), Coordinate { x: 0, y: 1 });
-        board.put_piece(black_beetle.clone(), Coordinate { x: 0, y: 1 });
-        board.put_piece(white_beetle.clone(), Coordinate { x: 0, y: 1 });
-        board.put_piece(black_ant.clone(), Coordinate { x: 0, y: -1 });
+        board.put_piece(black_bee.clone(), XYCoordinate { x: 0, y: 0 });
+        board.put_piece(white_bee.clone(), XYCoordinate { x: 0, y: 1 });
+        board.put_piece(black_beetle.clone(), XYCoordinate { x: 0, y: 1 });
+        board.put_piece(white_beetle.clone(), XYCoordinate { x: 0, y: 1 });
+        board.put_piece(black_ant.clone(), XYCoordinate { x: 0, y: -1 });
         board
-            .move_top_piece(Coordinate { x: 0, y: -1 }, Coordinate { x: 1, y: 1 })
+            .move_top_piece(XYCoordinate { x: 0, y: -1 }, XYCoordinate { x: 1, y: 1 })
             .unwrap();
         board
-            .move_top_piece(Coordinate { x: 0, y: 1 }, Coordinate { x: 0, y: 0 })
+            .move_top_piece(XYCoordinate { x: 0, y: 1 }, XYCoordinate { x: 0, y: 0 })
             .unwrap();
 
         assert_eq!(
-            board.get_cell(Coordinate { x: 0, y: 0 }),
+            board.get_cell(XYCoordinate { x: 0, y: 0 }),
             Some(&vec![black_bee, white_beetle])
         );
         assert_eq!(
-            board.get_cell(Coordinate { x: 0, y: 1 }),
+            board.get_cell(XYCoordinate { x: 0, y: 1 }),
             Some(&vec![white_bee, black_beetle])
         );
         assert_eq!(
-            board.get_cell(Coordinate { x: 1, y: 1 }),
+            board.get_cell(XYCoordinate { x: 1, y: 1 }),
             Some(&vec![black_ant])
         );
         assert_eq!(board.get_cell((10, 1).into()), None);

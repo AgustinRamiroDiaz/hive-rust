@@ -4,28 +4,28 @@ use std::{collections::HashSet, marker::PhantomData};
 
 // [(-1, 0), (-1, 1), (0, 1), (1, 0), (1, -1), (0, -1)]
 // starts from the left and goes clockwise
-const RELATIVE_NEIGHBORS_CLOCKWISE: [Coordinate; 6] = [
-    Coordinate { x: -1, y: 0 },
-    Coordinate { x: -1, y: 1 },
-    Coordinate { x: 0, y: 1 },
-    Coordinate { x: 1, y: 0 },
-    Coordinate { x: 1, y: -1 },
-    Coordinate { x: 0, y: -1 },
+const RELATIVE_NEIGHBORS_CLOCKWISE: [XYCoordinate; 6] = [
+    XYCoordinate { x: -1, y: 0 },
+    XYCoordinate { x: -1, y: 1 },
+    XYCoordinate { x: 0, y: 1 },
+    XYCoordinate { x: 1, y: 0 },
+    XYCoordinate { x: 1, y: -1 },
+    XYCoordinate { x: 0, y: -1 },
 ];
 
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
-pub(crate) struct Coordinate {
+pub(crate) struct XYCoordinate {
     pub(crate) x: i8,
     pub(crate) y: i8,
 }
 
-impl From<(i8, i8)> for Coordinate {
+impl From<(i8, i8)> for XYCoordinate {
     fn from((x, y): (i8, i8)) -> Self {
         Self { x, y }
     }
 }
 
-impl std::ops::Add for Coordinate {
+impl std::ops::Add for XYCoordinate {
     type Output = Self;
 
     fn add(self, other: Self) -> Self::Output {
@@ -36,7 +36,7 @@ impl std::ops::Add for Coordinate {
     }
 }
 
-impl std::ops::Sub for Coordinate {
+impl std::ops::Sub for XYCoordinate {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {
@@ -48,14 +48,19 @@ impl std::ops::Sub for Coordinate {
 }
 
 pub(crate) trait NewHexagonalCoordinateSystem {
-    type Coord;
+    type Coordinate;
     type Direction;
 
-    fn neighbor_coordinates(&self, from: Self::Coord) -> [Self::Coord; 6];
+    fn neighbor_coordinates(&self, from: Self::Coordinate) -> [Self::Coordinate; 6];
 
     // Determine if a piece can slide from one cell to another
     // Behavior is undefined if the cells are not neighbors
-    fn can_slide(&self, from: Self::Coord, to: Self::Coord, hive: &HashSet<Self::Coord>) -> bool;
+    fn can_slide(
+        &self,
+        from: Self::Coordinate,
+        to: Self::Coordinate,
+        hive: &HashSet<Self::Coordinate>,
+    ) -> bool;
 
     fn relative_neighbors_clockwise(&self) -> [Self::Direction; 6];
 }
@@ -65,30 +70,31 @@ struct GenericCoordinateSystem<Coord, Direction> {
     _phantom: PhantomData<Coord>,
 }
 
-impl<Coord, Direction> NewHexagonalCoordinateSystem for GenericCoordinateSystem<Coord, Direction>
+impl<Coordinate, Direction> NewHexagonalCoordinateSystem
+    for GenericCoordinateSystem<Coordinate, Direction>
 where
-    Coord: std::ops::Add
-        + std::ops::Add<Direction, Output = Coord>
+    Coordinate: std::ops::Add
+        + std::ops::Add<Direction, Output = Coordinate>
         + PartialEq
         + Eq
         + std::hash::Hash
-        + std::ops::Sub<Output = Coord>
+        + std::ops::Sub<Output = Coordinate>
         + Copy
         + std::convert::TryInto<Direction>,
-    <Coord as TryInto<Direction>>::Error: std::fmt::Debug,
+    <Coordinate as TryInto<Direction>>::Error: std::fmt::Debug,
     Direction: Copy + PartialEq,
 {
-    type Coord = Coord;
+    type Coordinate = Coordinate;
     type Direction = Direction;
-    fn neighbor_coordinates(&self, from: Self::Coord) -> [Self::Coord; 6] {
+    fn neighbor_coordinates(&self, from: Self::Coordinate) -> [Self::Coordinate; 6] {
         self.neighbors.map(|delta| from + delta)
     }
 
     fn can_slide(
         &self,
-        from: Self::Coord,
-        to: Self::Coord,
-        occupied: &HashSet<Self::Coord>,
+        from: Self::Coordinate,
+        to: Self::Coordinate,
+        occupied: &HashSet<Self::Coordinate>,
     ) -> bool {
         // TODO: remove unwrap
         let relative_position = (to - from).try_into().unwrap();
@@ -116,15 +122,19 @@ where
 }
 
 pub(crate) trait HexagonalCoordinateSystem {
-    type Coord;
+    type Coordinate;
 
-    fn neighbor_coordinates(from: Self::Coord) -> [Self::Coord; 6];
+    fn neighbor_coordinates(from: Self::Coordinate) -> [Self::Coordinate; 6];
 
     // Determine if a piece can slide from one cell to another
     // Behavior is undefined if the cells are not neighbors
-    fn can_slide(from: Self::Coord, to: Self::Coord, hive: &HashSet<Self::Coord>) -> bool;
+    fn can_slide(
+        from: Self::Coordinate,
+        to: Self::Coordinate,
+        hive: &HashSet<Self::Coordinate>,
+    ) -> bool;
 
-    fn relative_neighbors_clockwise() -> [Self::Coord; 6];
+    fn relative_neighbors_clockwise() -> [Self::Coordinate; 6];
 }
 
 // 2 axis aligned with the hive, flat top
@@ -144,13 +154,17 @@ pub(crate) trait HexagonalCoordinateSystem {
 pub(crate) struct AxialCoordinateSystem {}
 
 impl HexagonalCoordinateSystem for AxialCoordinateSystem {
-    type Coord = Coordinate;
+    type Coordinate = XYCoordinate;
 
-    fn neighbor_coordinates(from: Self::Coord) -> [Self::Coord; 6] {
+    fn neighbor_coordinates(from: Self::Coordinate) -> [Self::Coordinate; 6] {
         RELATIVE_NEIGHBORS_CLOCKWISE.map(|delta| from + delta)
     }
 
-    fn can_slide(from: Self::Coord, to: Self::Coord, occupied: &HashSet<Self::Coord>) -> bool {
+    fn can_slide(
+        from: Self::Coordinate,
+        to: Self::Coordinate,
+        occupied: &HashSet<Self::Coordinate>,
+    ) -> bool {
         let relative_position = to - from;
 
         // TODO: remove unwrap
@@ -171,7 +185,7 @@ impl HexagonalCoordinateSystem for AxialCoordinateSystem {
         return left_neighbor.is_none() || right_neighbor.is_none();
     }
 
-    fn relative_neighbors_clockwise() -> [Self::Coord; 6] {
+    fn relative_neighbors_clockwise() -> [Self::Coordinate; 6] {
         RELATIVE_NEIGHBORS_CLOCKWISE
     }
 }

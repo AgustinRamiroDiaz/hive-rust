@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use yew::prelude::*;
 use yew::{html, Component, Context, Html};
 
-use crate::coordinate::Coordinate;
+use crate::coordinate::XYCoordinate;
 // Define the possible messages which can be sent to the component
 #[derive(Debug, Clone, PartialEq)]
 enum Msg {
@@ -19,7 +19,7 @@ enum Msg {
 #[derive(PartialEq, Clone)]
 struct App {
     selected: Option<Msg>,
-    possible_moves: HashSet<Coordinate>,
+    possible_moves: HashSet<XYCoordinate>,
     game: game::Game,
     game_error: String,
 }
@@ -105,7 +105,7 @@ impl Component for App {
             .game
             .hive()
             .iter()
-            .map(|Coordinate { x: _, y }| *y)
+            .map(|XYCoordinate { x: _, y }| *y)
             .min()
             .unwrap_or(0);
 
@@ -113,7 +113,7 @@ impl Component for App {
             .game
             .hive()
             .iter()
-            .map(|Coordinate { x: _, y }| *y)
+            .map(|XYCoordinate { x: _, y }| *y)
             .max()
             .unwrap_or(0);
 
@@ -121,7 +121,7 @@ impl Component for App {
             .game
             .hive()
             .iter()
-            .map(|Coordinate { x, y: _ }| *x)
+            .map(|XYCoordinate { x, y: _ }| *x)
             .min()
             .unwrap_or(0)
             - 2;
@@ -130,7 +130,7 @@ impl Component for App {
             .game
             .hive()
             .iter()
-            .map(|Coordinate { x, y: _ }| *x)
+            .map(|XYCoordinate { x, y: _ }| *x)
             .max()
             .unwrap_or(0)
             + 2;
@@ -298,7 +298,7 @@ fn FnApp() -> Html {
         .game
         .hive()
         .iter()
-        .map(|Coordinate { x: _, y }| *y)
+        .map(|XYCoordinate { x: _, y }| *y)
         .min()
         .unwrap_or(0);
 
@@ -306,7 +306,7 @@ fn FnApp() -> Html {
         .game
         .hive()
         .iter()
-        .map(|Coordinate { x: _, y }| *y)
+        .map(|XYCoordinate { x: _, y }| *y)
         .max()
         .unwrap_or(0);
 
@@ -314,7 +314,7 @@ fn FnApp() -> Html {
         .game
         .hive()
         .iter()
-        .map(|Coordinate { x, y: _ }| *x)
+        .map(|XYCoordinate { x, y: _ }| *x)
         .min()
         .unwrap_or(0)
         - 2;
@@ -323,7 +323,7 @@ fn FnApp() -> Html {
         .game
         .hive()
         .iter()
-        .map(|Coordinate { x, y: _ }| *x)
+        .map(|XYCoordinate { x, y: _ }| *x)
         .max()
         .unwrap_or(0)
         + 2;

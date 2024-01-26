@@ -2,14 +2,14 @@ use std::collections::HashSet;
 use std::vec;
 
 use crate::board::StackableHexagonalBoard;
-use crate::coordinate::{AxialCoordinateSystem, Coordinate, HexagonalCoordinateSystem};
+use crate::coordinate::{AxialCoordinateSystem, HexagonalCoordinateSystem, XYCoordinate};
 use crate::piece::{Bug, Color, Piece};
 
 #[derive(PartialEq, Clone)]
 pub(crate) struct Game {
     turn: Color,
     result: Option<GameResult>,
-    board: StackableHexagonalBoard<Piece, AxialCoordinateSystem, Coordinate>,
+    board: StackableHexagonalBoard<Piece, AxialCoordinateSystem, XYCoordinate>,
     turn_number: u8,
     pool: Vec<Piece>,
 }
@@ -45,7 +45,7 @@ impl Game {
             pool,
         }
     }
-    pub(crate) fn put(&mut self, piece: Piece, coordinate: Coordinate) -> Result<(), GameError> {
+    pub(crate) fn put(&mut self, piece: Piece, coordinate: XYCoordinate) -> Result<(), GameError> {
         if let Some(winner) = self.result.clone() {
             return Err(GameError::GameFinished(winner));
         }
@@ -115,7 +115,11 @@ impl Game {
         self.turn_number += 1;
     }
 
-    pub(crate) fn move_top(&mut self, from: Coordinate, to: Coordinate) -> Result<(), GameError> {
+    pub(crate) fn move_top(
+        &mut self,
+        from: XYCoordinate,
+        to: XYCoordinate,
+    ) -> Result<(), GameError> {
         if from == to {
             return Err(GameError::InvalidMove);
         }
@@ -174,11 +178,11 @@ impl Game {
         Ok(())
     }
 
-    fn can_move(&self, from: Coordinate, to: Coordinate) -> Result<bool, ()> {
+    fn can_move(&self, from: XYCoordinate, to: XYCoordinate) -> Result<bool, ()> {
         Ok(self.possible_moves(from)?.contains(&to))
     }
 
-    pub(crate) fn possible_moves(&self, from: Coordinate) -> Result<HashSet<Coordinate>, ()> {
+    pub(crate) fn possible_moves(&self, from: XYCoordinate) -> Result<HashSet<XYCoordinate>, ()> {
         let piece = self.board.get_top_piece(from).ok_or(())?;
 
         Ok(match piece.bug {
@@ -255,7 +259,7 @@ impl Game {
                 let walkable = self.board.walkable_without(from);
 
                 // Traverse the tree
-                let mut reachable: HashSet<Coordinate> = HashSet::new();
+                let mut reachable: HashSet<XYCoordinate> = HashSet::new();
                 let mut to_check = vec![from];
 
                 while let Some(current) = to_check.pop() {
@@ -330,11 +334,11 @@ impl Game {
             .collect()
     }
 
-    pub(crate) fn get_top_piece(&self, coordinate: Coordinate) -> Option<&Piece> {
+    pub(crate) fn get_top_piece(&self, coordinate: XYCoordinate) -> Option<&Piece> {
         self.board.get_top_piece(coordinate)
     }
 
-    pub(crate) fn hive(&self) -> HashSet<Coordinate> {
+    pub(crate) fn hive(&self) -> HashSet<XYCoordinate> {
         self.board.hive()
     }
 }
