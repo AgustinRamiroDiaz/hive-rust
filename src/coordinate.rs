@@ -80,7 +80,7 @@ impl HexagonalCoordinateSystem for AxialCoordinateSystem {
         RELATIVE_NEIGHBORS_CLOCKWISE.map(|delta| from + delta)
     }
 
-    fn can_slide(from: Self::Coord, to: Self::Coord, hive: &HashSet<Self::Coord>) -> bool {
+    fn can_slide(from: Self::Coord, to: Self::Coord, occupied: &HashSet<Self::Coord>) -> bool {
         let relative_position = to - from;
 
         // TODO: remove unwrap
@@ -94,9 +94,9 @@ impl HexagonalCoordinateSystem for AxialCoordinateSystem {
         let relative_left_neighbor =
             RELATIVE_NEIGHBORS_CLOCKWISE[(relative_neighbors_position + 5) % 6];
 
-        let right_neighbor = hive.get(&(from + relative_right_neighbor));
+        let right_neighbor = occupied.get(&(from + relative_right_neighbor));
 
-        let left_neighbor = hive.get(&(from + relative_left_neighbor));
+        let left_neighbor = occupied.get(&(from + relative_left_neighbor));
 
         return left_neighbor.is_none() || right_neighbor.is_none();
     }
