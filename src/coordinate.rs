@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
+// Useful guide for understanding hexagonal coordinates: https://www.redblobgames.com/grids/hexagons/#neighbors-axial
+
 // [(-1, 0), (-1, 1), (0, 1), (1, 0), (1, -1), (0, -1)]
+// starts from the left and goes clockwise
 pub(crate) const RELATIVE_NEIGHBORS_CLOCKWISE: [Coordinate; 6] = [
     Coordinate { x: -1, y: 0 },
     Coordinate { x: -1, y: 1 },
@@ -52,7 +55,8 @@ pub(crate) trait HexagonalCoordinateSystem {
     fn can_slide(from: Self::Coord, to: Self::Coord, hive: &HashSet<Self::Coord>) -> bool;
 }
 
-// 2 axis aligned with the hive
+// 2 axis aligned with the hive, flat top
+// https://www.redblobgames.com/grids/hexagons/#neighbors-axial
 //
 //                 / y axis
 //                /
