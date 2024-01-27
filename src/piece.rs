@@ -1,9 +1,6 @@
 #[derive(PartialEq, Debug, Clone)]
-pub(crate) struct Piece<B>
-where
-    B: BugTrait,
-{
-    pub(crate) bug: B,
+pub(crate) struct Piece {
+    pub(crate) bug: Bug,
     pub(crate) color: Color,
 }
 
@@ -66,7 +63,7 @@ impl std::fmt::Display for Color {
     }
 }
 
-impl std::fmt::Display for Piece<Bug> {
+impl std::fmt::Display for Piece {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.color, self.bug)
     }
