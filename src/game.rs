@@ -190,11 +190,14 @@ impl Game {
         Ok(())
     }
 
-    fn can_move(&self, from: XYCoordinate, to: XYCoordinate) -> Result<bool, ()> {
+    fn can_move(&mut self, from: XYCoordinate, to: XYCoordinate) -> Result<bool, ()> {
         Ok(self.possible_moves(from)?.contains(&to))
     }
 
-    pub(crate) fn possible_moves(&self, from: XYCoordinate) -> Result<HashSet<XYCoordinate>, ()> {
+    pub(crate) fn possible_moves(
+        &mut self,
+        from: XYCoordinate,
+    ) -> Result<HashSet<XYCoordinate>, ()> {
         let piece = self.board.get_top_piece(from).ok_or(())?;
 
         Ok(match piece.bug {

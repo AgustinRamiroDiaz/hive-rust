@@ -15,18 +15,53 @@ where
     pub(crate) coordinate_system: CS,
 }
 
+struct PieceGuard<'a, P, CS, C>
+where
+    CS: HexagonalCoordinateSystem<Coordinate = C>,
+    C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
+    P: Clone,
+{
+    board: &'a mut StackableHexagonalBoard<P, CS, C>,
+    piece: P,
+    coordinate: C,
+}
+
+impl<'a, P, CS, C> Drop for PieceGuard<'a, P, CS, C>
+where
+    CS: HexagonalCoordinateSystem<Coordinate = C>,
+    C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
+    P: Clone, // TODO: is it possible to remove this? we want to move the ownership back to the board
+{
+    fn drop(&mut self) {
+        self.board.put_piece(self.piece.clone(), self.coordinate);
+    }
+}
+
 type Cell<T> = Vec<T>;
 
 impl<P, CS, C> StackableHexagonalBoard<P, CS, C>
 where
     CS: HexagonalCoordinateSystem<Coordinate = C>,
     C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
+    P: Clone,
 {
     pub(crate) fn new(cs: CS) -> Self {
         StackableHexagonalBoard {
             cells: HashMap::new(),
             coordinate_system: cs,
         }
+    }
+
+    // examine takes a piece from the board and returns a guard that will put the piece back on drop
+    fn examine(&mut self, coordinate: C) -> Option<PieceGuard<P, CS, C>> {
+        let from_cell = self.cells.get_mut(&coordinate)?;
+        let piece = from_cell.pop()?;
+
+        Some(PieceGuard {
+            board: self,
+            piece,
+            coordinate,
+        })
     }
 
     pub(crate) fn get_cell(&self, coordinate: C) -> Option<&Cell<P>> {
@@ -86,11 +121,9 @@ where
         )
     }
 
-    pub(crate) fn hive_without(&self, coordinate: C) -> HashSet<C> {
-        match self.get_cell(coordinate).unwrap_or(&vec![]).len() {
-            0 | 1 => self.hive().sub(&[coordinate].into()),
-            _ => self.hive(),
-        }
+    pub(crate) fn hive_without(&mut self, coordinate: C) -> HashSet<C> {
+        let piece_guard = self.examine(coordinate).unwrap();
+        piece_guard.board.hive()
     }
 
     pub(crate) fn occupied_amount(&self) -> usize {
@@ -98,7 +131,7 @@ where
     }
 
     // Returns the outline walkable cells without taking into account the top piece at the position given
-    pub(crate) fn walkable_without(&self, coordinate: C) -> HashSet<C> {
+    pub(crate) fn walkable_without(&mut self, coordinate: C) -> HashSet<C> {
         let hive_without = self.hive_without(coordinate);
 
         let neighbors: HashSet<C> = hive_without
@@ -109,7 +142,7 @@ where
         neighbors.sub(&hive_without)
     }
 
-    pub(crate) fn hive_and_walkable_without(&self, coordinate: C) -> HashSet<C> {
+    pub(crate) fn hive_and_walkable_without(&mut self, coordinate: C) -> HashSet<C> {
         let hive_without = self.hive_without(coordinate);
 
         let neighbors: HashSet<C> = hive_without
