@@ -3,7 +3,10 @@ use std::{
     ops::Sub,
 };
 
-use crate::coordinate::HexagonalCoordinateSystem;
+use crate::{
+    coordinate::{GenericCoordinateSystem, HexagonalCoordinateSystem, XYCoordinate},
+    piece::{self, Board, Piece},
+};
 
 #[derive(PartialEq, Clone)]
 pub(crate) struct StackableHexagonalBoard<P, CS, C>
@@ -78,46 +81,8 @@ where
             .collect()
     }
 
-    pub(crate) fn hive(&self) -> HashSet<C> {
-        HashSet::from_iter(
-            self.cells
-                .iter()
-                .flat_map(|(&c, _)| self.get_top_piece(c).map(|_| c)),
-        )
-    }
-
-    pub(crate) fn hive_without(&self, coordinate: C) -> HashSet<C> {
-        match self.get_cell(coordinate).unwrap_or(&vec![]).len() {
-            0 | 1 => self.hive().sub(&[coordinate].into()),
-            _ => self.hive(),
-        }
-    }
-
     pub(crate) fn occupied_amount(&self) -> usize {
         self.cells.len()
-    }
-
-    // Returns the outline walkable cells without taking into account the top piece at the position given
-    pub(crate) fn walkable_without(&self, coordinate: C) -> HashSet<C> {
-        let hive_without = self.hive_without(coordinate);
-
-        let neighbors: HashSet<C> = hive_without
-            .iter()
-            .flat_map(|&c| self.coordinate_system.neighbor_coordinates(c))
-            .collect();
-
-        neighbors.sub(&hive_without)
-    }
-
-    pub(crate) fn hive_and_walkable_without(&self, coordinate: C) -> HashSet<C> {
-        let hive_without = self.hive_without(coordinate);
-
-        let neighbors: HashSet<C> = hive_without
-            .iter()
-            .flat_map(|&c| self.coordinate_system.neighbor_coordinates(c))
-            .collect();
-
-        neighbors.union(&hive_without).copied().collect()
     }
 
     pub(crate) fn find<F>(&self, filter: F) -> Vec<C>
@@ -130,6 +95,54 @@ where
             .filter(|(_, p)| filter(p))
             .map(|(c, _)| c)
             .collect()
+    }
+}
+
+impl<Piece, CS, C> Board<C, CS> for &StackableHexagonalBoard<Piece, CS, C>
+where
+    CS: HexagonalCoordinateSystem<Coordinate = C>,
+    C: PartialEq + std::hash::Hash + std::cmp::Eq + Clone + Copy,
+{
+    fn coordinate_system(&self) -> CS {
+        self.coordinate_system
+    }
+
+    fn hive(&self) -> HashSet<C> {
+        HashSet::from_iter(
+            self.cells
+                .iter()
+                .flat_map(|(&c, _)| self.get_top_piece(c).map(|_| c)),
+        )
+    }
+
+    fn hive_without(&self, coordinate: C) -> HashSet<C> {
+        match self.get_cell(coordinate).unwrap_or(&vec![]).len() {
+            0 | 1 => self.hive().sub(&[coordinate].into()),
+            _ => self.hive(),
+        }
+    }
+
+    // Returns the outline walkable cells without taking into account the top piece at the position given
+    fn walkable_without(&self, coordinate: C) -> HashSet<C> {
+        let hive_without = self.hive_without(coordinate);
+
+        let neighbors: HashSet<C> = hive_without
+            .iter()
+            .flat_map(|&c| self.coordinate_system.neighbor_coordinates(c))
+            .collect();
+
+        neighbors.sub(&hive_without)
+    }
+
+    fn hive_and_walkable_without(&self, coordinate: C) -> HashSet<C> {
+        let hive_without = self.hive_without(coordinate);
+
+        let neighbors: HashSet<C> = hive_without
+            .iter()
+            .flat_map(|&c| self.coordinate_system.neighbor_coordinates(c))
+            .collect();
+
+        neighbors.union(&hive_without).copied().collect()
     }
 }
 

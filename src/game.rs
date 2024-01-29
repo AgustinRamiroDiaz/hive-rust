@@ -5,19 +5,19 @@ use crate::board::StackableHexagonalBoard;
 use crate::coordinate::{
     GenericCoordinateSystem, HexagonalCoordinateSystem, XYCoordinate, RELATIVE_NEIGHBORS_CLOCKWISE,
 };
-use crate::piece::{Bug, Color, Piece};
+use crate::piece::{Board, Bug, BugTrait, Color, Piece};
 
 #[derive(PartialEq, Clone)]
-pub(crate) struct Game {
+pub(crate) struct Game<B> {
     turn: Color,
     result: Option<GameResult>,
     board: StackableHexagonalBoard<
-        Piece,
+        Piece<B>,
         GenericCoordinateSystem<XYCoordinate, XYCoordinate>,
         XYCoordinate,
     >,
     turn_number: u8,
-    pool: Vec<Piece>,
+    pool: Vec<Piece<B>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -41,8 +41,19 @@ pub(crate) enum GameError {
     MustPlaceBeeBeforeMoving,
 }
 
-impl Game {
-    pub(crate) fn new(pool: Vec<Piece>) -> Self {
+impl<'a, Bug> Game<Bug>
+where
+    Bug: BugTrait<
+            &'a StackableHexagonalBoard<
+                Piece<Bug>,
+                GenericCoordinateSystem<XYCoordinate, XYCoordinate>,
+                XYCoordinate,
+            >,
+            XYCoordinate,
+            GenericCoordinateSystem<XYCoordinate, XYCoordinate>,
+        > + 'a,
+{
+    pub(crate) fn new(pool: Vec<Piece<Bug>>) -> Self {
         Game {
             turn: Color::Black,
             result: None,
@@ -53,7 +64,11 @@ impl Game {
             pool,
         }
     }
-    pub(crate) fn put(&mut self, piece: Piece, coordinate: XYCoordinate) -> Result<(), GameError> {
+    pub(crate) fn put(
+        &mut self,
+        piece: Piece<Bug>,
+        coordinate: XYCoordinate,
+    ) -> Result<(), GameError> {
         if let Some(winner) = self.result.clone() {
             return Err(GameError::GameFinished(winner));
         }
@@ -80,11 +95,11 @@ impl Game {
         let colored_queen_is_not_placed = self
             .pool
             .iter()
-            .any(|p| p.bug == Bug::Bee && p.color == self.turn);
+            .any(|p| p.bug.is_bee() && p.color == self.turn);
 
         let is_fourth_turn = self.turn_number == 7 || self.turn_number == 8;
 
-        if is_fourth_turn && piece.bug != Bug::Bee && colored_queen_is_not_placed {
+        if is_fourth_turn && !piece.bug.is_bee() && colored_queen_is_not_placed {
             return Err(GameError::QueenMustBePlacedBeforeFifthTurn);
         }
 
@@ -103,7 +118,7 @@ impl Game {
         // TODO: we are supposing that there are only 2 players
         // Once we extend the game to support more players, this will have to change
         let color_enclosed = [Color::Black, Color::White].map(|color| {
-            let bee = self.board.find(|p| p.color == color && p.bug == Bug::Bee);
+            let bee = self.board.find(|p| p.color == color && p.bug.is_bee());
 
             let any_enclosed = bee
                 .iter()
@@ -124,7 +139,7 @@ impl Game {
     }
 
     pub(crate) fn move_top(
-        &mut self,
+        &'a mut self,
         from: XYCoordinate,
         to: XYCoordinate,
     ) -> Result<(), GameError> {
@@ -140,7 +155,7 @@ impl Game {
             .pool
             .iter()
             .filter(|p| p.color == self.turn)
-            .any(|p| p.bug == Bug::Bee)
+            .any(|p| p.bug.is_bee())
         {
             return Err(GameError::MustPlaceBeeBeforeMoving);
         }
@@ -163,7 +178,7 @@ impl Game {
             .move_top_piece(from, to)
             .or_else(|_| Err(GameError::NoPieceAtLocation))?;
 
-        let hive = self.board.hive();
+        let hive = (&self.board).hive();
 
         // TODO: could this be done more efficiently?
         let mut reachable = HashSet::new();
@@ -190,148 +205,34 @@ impl Game {
         Ok(())
     }
 
-    fn can_move(&self, from: XYCoordinate, to: XYCoordinate) -> Result<bool, ()> {
+    fn can_move(&'a self, from: XYCoordinate, to: XYCoordinate) -> Result<bool, ()> {
         Ok(self.possible_moves(from)?.contains(&to))
     }
 
-    pub(crate) fn possible_moves(&self, from: XYCoordinate) -> Result<HashSet<XYCoordinate>, ()> {
+    pub(crate) fn possible_moves(
+        &'a self,
+        from: XYCoordinate,
+    ) -> Result<HashSet<XYCoordinate>, ()> {
         let piece = self.board.get_top_piece(from).ok_or(())?;
 
-        Ok(match piece.bug {
-            Bug::Bee => {
-                let walkable = self.board.walkable_without(from);
-
-                let hive = self.board.hive_without(from);
-
-                let neighbor_coordinates = self
-                    .board
-                    .coordinate_system
-                    .neighbor_coordinates(from)
-                    .into();
-                let slidable_neighbors =
-                    walkable.intersection(&neighbor_coordinates).filter(|&c| {
-                        self.board
-                            .coordinate_system
-                            .can_slide(from, *c, &hive)
-                            .unwrap() // TODO: dont unwrap
-                    });
-
-                slidable_neighbors.cloned().collect()
-            }
-            Bug::Beetle => self
-                .board
-                .hive_and_walkable_without(from)
-                .intersection(
-                    &self
-                        .board
-                        .coordinate_system
-                        .neighbor_coordinates(from)
-                        .into(),
-                )
-                .cloned()
-                .collect(),
-            Bug::Grasshopper => {
-                let hive = self.board.hive_without(from);
-
-                let possible_destinies = self
-                    .board
-                    .coordinate_system
-                    .relative_neighbors_clockwise()
-                    .into_iter()
-                    .flat_map(|direction| {
-                        let position = from + direction;
-
-                        if !hive.contains(&position) {
-                            return None;
-                        }
-
-                        let mut last = position;
-                        while hive.contains(&last) {
-                            last = last + direction;
-                        }
-                        Some(last)
-                    });
-
-                possible_destinies.collect()
-            }
-            Bug::Spider => {
-                let walkable = self.board.walkable_without(from);
-
-                let mut paths = vec![vec![from]];
-
-                for _ in 0..3 {
-                    let mut new_paths = vec![];
-
-                    for path in paths {
-                        let last = *path.last().ok_or(())?; // TODO: this should never fail
-
-                        let neighbor_coordinates = self
-                            .board
-                            .coordinate_system
-                            .neighbor_coordinates(last)
-                            .into();
-                        let walkable_neighbors = walkable.intersection(&neighbor_coordinates);
-                        let slidable_neighbors = walkable_neighbors
-                            .filter(|&c| !path.contains(c))
-                            .filter(|&c| {
-                                self.board
-                                    .coordinate_system
-                                    .can_slide(last, *c, &walkable)
-                                    .unwrap() // TODO: dont unwrap
-                            });
-
-                        for &neighbor in slidable_neighbors {
-                            let mut new_path = path.clone();
-                            new_path.push(neighbor);
-                            new_paths.push(new_path);
-                        }
-                    }
-
-                    paths = new_paths;
-                }
-
-                paths.iter().flat_map(|p| p.last()).cloned().collect()
-            }
-            Bug::Ant => {
-                let walkable = self.board.walkable_without(from);
-
-                // Traverse the tree
-                let mut reachable: HashSet<XYCoordinate> = HashSet::new();
-                let mut to_check = vec![from];
-
-                while let Some(current) = to_check.pop() {
-                    let neighbor_coordinates = self
-                        .board
-                        .coordinate_system
-                        .neighbor_coordinates(current)
-                        .into();
-                    let slidable_neighbors =
-                        walkable.intersection(&neighbor_coordinates).filter(|&&c| {
-                            self.board
-                                .coordinate_system
-                                .can_slide(current, c, &self.board.hive())
-                                .unwrap() // TODO: dont unwrap
-                        });
-
-                    for &neighbor in slidable_neighbors {
-                        if !reachable.contains(&neighbor) {
-                            to_check.push(neighbor);
-                        }
-                    }
-
-                    reachable.insert(current);
-                }
-
-                reachable
-            }
-        })
+        piece.bug.possible_moves(&self.board, from)
     }
 
-    pub(crate) fn get_pool(&self) -> &Vec<Piece> {
+    pub(crate) fn get_pool(&self) -> &Vec<Piece<Bug>> {
         &self.pool
     }
 
-    pub(crate) fn default_pool() -> Vec<Piece> {
+    pub(crate) fn get_top_piece(&self, coordinate: XYCoordinate) -> Option<&Piece<Bug>> {
+        self.board.get_top_piece(coordinate)
+    }
+
+    pub(crate) fn hive(&self) -> HashSet<XYCoordinate> {
+        (&self.board).hive()
+    }
+}
+
+impl Game<Bug> {
+    pub(crate) fn default_pool() -> Vec<Piece<Bug>> {
         [Color::Black, Color::White]
             .iter()
             .flat_map(|color| {
@@ -376,18 +277,12 @@ impl Game {
             .flat_map(|(count, piece)| (0..count).map(move |_| piece.clone()))
             .collect()
     }
-
-    pub(crate) fn get_top_piece(&self, coordinate: XYCoordinate) -> Option<&Piece> {
-        self.board.get_top_piece(coordinate)
-    }
-
-    pub(crate) fn hive(&self) -> HashSet<XYCoordinate> {
-        self.board.hive()
-    }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::piece::Bug;
+
     use super::*;
 
     #[test]
